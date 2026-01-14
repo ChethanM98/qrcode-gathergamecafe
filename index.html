@@ -1,0 +1,288 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <title>Gather & Game Café Menu</title>
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+
+  <style>
+    body {
+      margin: 0;
+      font-family: "Trebuchet MS", Arial, sans-serif;
+      background: url("https://i.imgur.com/7QFJ7QG.jpg") no-repeat center center fixed;
+      background-size: cover;
+      color: #2b1a0e;
+    }
+
+    .overlay {
+      background: rgba(245, 236, 220, 0.95);
+      min-height: 100vh;
+      padding: 20px;
+    }
+
+    h1 {
+      text-align: center;
+      margin-bottom: 10px;
+      font-size: 32px;
+    }
+
+    .subtitle {
+      text-align: center;
+      font-size: 14px;
+      margin-bottom: 25px;
+      color: #5a3b1e;
+    }
+
+    .section {
+      margin-bottom: 30px;
+    }
+
+    .section h2 {
+      border-bottom: 3px solid #8b5a2b;
+      padding-bottom: 6px;
+      margin-bottom: 15px;
+      font-size: 22px;
+    }
+
+    .menu-item {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      background: #fff8ee;
+      border: 1px solid #c2a476;
+      border-radius: 8px;
+      padding: 12px;
+      margin-bottom: 12px;
+    }
+
+    .menu-info h3 {
+      margin: 0;
+      font-size: 18px;
+    }
+
+    .menu-info p {
+      margin: 4px 0 0;
+      font-weight: bold;
+    }
+
+    .menu-item button {
+      background: #8b5a2b;
+      color: white;
+      border: none;
+      border-radius: 6px;
+      padding: 8px 14px;
+      font-size: 14px;
+      cursor: pointer;
+    }
+
+    .menu-item button:hover {
+      background: #6e451f;
+    }
+
+    .cart-btn {
+      position: fixed;
+      bottom: 20px;
+      left: 50%;
+      transform: translateX(-50%);
+      background: #2f7d32;
+      color: white;
+      padding: 14px 26px;
+      border-radius: 30px;
+      text-decoration: none;
+      font-size: 18px;
+      box-shadow: 0 4px 10px rgba(0,0,0,0.3);
+    }
+
+    .cart-btn:hover {
+      background: #256628;
+    }
+  </style>
+</head>
+
+<body>
+  <div class="overlay">
+
+    <h1>🎲 Gather & Game Café</h1>
+    <div class="subtitle">Play • Sip • Repeat</div>
+
+  <!-- Eggs & Breads -->
+    <div class="section">
+      <h2>Eggs & Breads</h2>
+
+      <div class="menu-item">
+        <div class="menu-info">
+          <h3>Fried Eggs (2 pieces)</h3>
+          <span class="description">Sunny side-up or over easy</span>
+          <p>₹49</p>
+        </div>
+        <button onclick="addToCart('Fried Eggs (2 pieces)', 49)">Add</button>
+      </div>
+
+      <div class="menu-item">
+        <div class="menu-info">
+          <h3>Boiled Eggs (2 pieces)</h3>
+          <span class="description">Perfectly boiled and served with salt & pepper</span>
+          <p>₹49</p>
+        </div>
+        <button onclick="addToCart('Boiled Eggs (2 pieces)', 49)">Add</button>
+      </div>
+
+      <div class="menu-item">
+        <div class="menu-info">
+          <h3>Masala Omelette</h3>
+          <span class="description">Spicy Indian-style Omelette with onions, tomatoes and green chillies</span>
+          <p>₹89</p>
+        </div>
+        <button onclick="addToCart('Masala Omelette', 89)">Add</button>
+      </div>
+      <div class="menu-item">
+        <div class="menu-info">
+          <h3>Cheese Omelette</h3>
+          <span class="description">Fluffy Omelette loaded with melted cheese</span>
+          <p>₹99</p>
+        </div>
+        <button onclick="addToCart('Cheese Omelette', 99)">Add</button>
+      </div><div class="menu-item">
+        <div class="menu-info">
+          <h3>Egg Bhurji</h3>
+          <span class="description">Scrambled eggs cooked with onions, tomatoes and spices</span>
+          <p>₹99</p>
+        </div>
+        <button onclick="addToCart('Egg Bhurji', 99)">Add</button>
+      </div><div class="menu-item">
+        <div class="menu-info">
+          <h3>Mushroom Cheese Omelette</h3>
+          <span class="description">Omelette filled with sauteed mushrooms and melted cheese</span>
+          <p>₹109</p>
+        </div>
+        <button onclick="addToCart('Mushroom Cheese Omelette', 109)">Add</button>
+      </div><div class="menu-item">
+        <div class="menu-info">
+          <h3>Veggie Loaded Omelette</h3>
+          <span class="description">Omelette packed with mixed veggies and cheese</span>
+          <p>₹109</p>
+        </div>
+        <button onclick="addToCart('Veggie Loaded Omelette', 109)">Add</button>
+        </div><div class="menu-item">
+        <div class="menu-info">
+          <h3>Chicken Omelette</h3>
+          <span class="description">Omelette stuffed with spiced chicken and cheese</span>
+          <p>₹119</p>
+        </div>
+        <button onclick="addToCart('Chicken Omelette', 119)">Add</button></div><div class="menu-item">
+        <div class="menu-info">
+          <h3>Anda Bhurji Pav</h3>
+          <span class="description">Spicy Scrambled eggs served with buttered pav(soft bread rolls)</span>
+          <p>₹119</p>
+        </div>
+        <button onclick="addToCart('Anda Bhurji Pav', 119)">Add</button></div><div class="menu-item">
+        <div class="menu-info">
+          <h3>Paneer Bhurji</h3>
+          <span class="description">Scrambled Panner cooked with onions, tomatoes and Indian spices</span>
+          <p>₹129</p>
+        </div>
+        <button onclick="addToCart('Panner Bhurji', 129)">Add</button>
+      </div>
+
+
+    </div>
+
+    <!-- HOT BEVERAGES -->
+    <div class="section">
+      <h2>☕ Hot Beverages</h2>
+
+      <div class="menu-item">
+        <div class="menu-info">
+          <h3>Masala Chai</h3>
+          <p>₹49</p>
+        </div>
+        <button onclick="addToCart('Masala Chai', 49)">Add</button>
+      </div>
+
+      <div class="menu-item">
+        <div class="menu-info">
+          <h3>Filter Coffee</h3>
+          <p>₹49</p>
+        </div>
+        <button onclick="addToCart('Filter Coffee', 49)">Add</button>
+      </div>
+
+      <div class="menu-item">
+        <div class="menu-info">
+          <h3>Hot Chocolate</h3>
+          <p>₹99</p>
+        </div>
+        <button onclick="addToCart('Hot Chocolate', 99)">Add</button>
+      </div>
+    </div>
+
+    <!-- STARTERS -->
+    <div class="section">
+      <h2>🍟 Starters</h2>
+
+      <div class="menu-item">
+        <div class="menu-info">
+          <h3>Dice Roll Fries</h3>
+          <p>₹149</p>
+        </div>
+        <button onclick="addToCart('Dice Roll Fries', 149)">Add</button>
+      </div>
+
+      <div class="menu-item">
+        <div class="menu-info">
+          <h3>Cheese Balls</h3>
+          <p>₹179</p>
+        </div>
+        <button onclick="addToCart('Cheese Balls', 179)">Add</button>
+      </div>
+    </div>
+
+    <!-- BURGERS -->
+    <div class="section">
+      <h2>🍔 Burgers & Sandwiches</h2>
+
+      <div class="menu-item">
+        <div class="menu-info">
+          <h3>Veg Burger</h3>
+          <p>₹179</p>
+        </div>
+        <button onclick="addToCart('Veg Burger', 179)">Add</button>
+      </div>
+
+      <div class="menu-item">
+        <div class="menu-info">
+          <h3>Chicken Burger</h3>
+          <p>₹229</p>
+        </div>
+        <button onclick="addToCart('Chicken Burger', 229)">Add</button>
+      </div>
+    </div>
+
+    <!-- PIZZAS -->
+    <div class="section">
+      <h2>🍕 Pizzas</h2>
+
+      <div class="menu-item">
+        <div class="menu-info">
+          <h3>Margherita Pizza</h3>
+          <p>₹219</p>
+        </div>
+        <button onclick="addToCart('Margherita Pizza', 219)">Add</button>
+      </div>
+
+      <div class="menu-item">
+        <div class="menu-info">
+          <h3>Peri Peri Chicken Pizza</h3>
+          <p>₹329</p>
+        </div>
+        <button onclick="addToCart('Peri Peri Chicken Pizza', 329)">Add</button>
+      </div>
+    </div>
+
+    <a href="cart.html" class="cart-btn">🛒 Go to Cart</a>
+
+  </div>
+
+  <script src="script.js"></script>
+</body>
+</html>
