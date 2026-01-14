@@ -141,14 +141,17 @@ button:hover {
     <p>₹89</p>
 
     <div class="qty-control">
-      <button onclick="changeQty('Masala Omelette', -1)">−</button>
-      <span id="qty-Masala Omelette">1</span>
-      <button onclick="changeQty('Masala Omelette', 1)">+</button>
+      <button onclick="changeQty('masala_omelette', -1)">−</button>
+      <span id="qty-masala_omelette">1</span>
+      <button onclick="changeQty('masala_omelette', 1)">+</button>
     </div>
   </div>
 
-  <button onclick="addToCart('Masala Omelette', 89)">Add</button>
+  <button onclick="addToCart('Masala Omelette', 89, 'masala_omelette')">
+    Add
+  </button>
 </div>
+
 
 <div class="menu-item">
   <div class="menu-info">
@@ -304,5 +307,6 @@ button:hover {
 <script src="script.js"></script>
 </body>
 </html>
+
 
 
