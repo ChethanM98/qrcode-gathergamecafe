@@ -103,7 +103,7 @@ button:hover {
 }
 
 .qty-control button {
-  padding: 4px 10px;
+  padding: 3px 9px;
   font-size: 16px;
 }
 
@@ -133,23 +133,19 @@ button:hover {
   </div>
   <button onclick="addToCart('Fried Eggs',49)">Add</button>
 </div>
-  
+
 <div class="menu-item">
   <div class="menu-info">
     <h3>Masala Omelette</h3>
     <span class="desc">Indian-style omelette with onions & spices</span>
     <p>₹89</p>
-      <button onclick="changeQty('masala_omelette', -1)">−</button>
-      <span id="qty-masala_omelette">0</span>
+          <button onclick="changeQty('masala_omelette', -1)">−</button>
+      <span id="masala_omelette">0</span>
       <button onclick="changeQty('masala_omelette', 1)">+</button>
   </div>
-
-  <button onclick="addToCart('Masala Omelette', 89, 'masala_omelette')">
-    Add
-  </button>
+  <button onclick="addToCart('Masala Omelette', 89, 'masala_omelette')">Add</button>
 </div>
-
-
+  
 <div class="menu-item">
   <div class="menu-info">
     <h3>Vegetable Omelette</h3>
@@ -304,6 +300,7 @@ button:hover {
 <script src="script.js"></script>
 </body>
 </html>
+
 
 
 
