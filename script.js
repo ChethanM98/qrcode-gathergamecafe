@@ -12,10 +12,25 @@ let cart = JSON.parse(localStorage.getItem("cart")) || [];
 
 // ================= ADD TO CART =================
 function addToCart(name, price) {
-  cart.push({ name, price });
+  const qtySpan = document.getElementById(`qty-${name}`);
+  const qty = qtySpan ? parseInt(qtySpan.innerText) : 1;
+
+  // Check if item already exists
+  const existing = cart.find(item => item.name === name);
+
+  if (existing) {
+    existing.qty += qty;
+  } else {
+    cart.push({ name, price, qty });
+  }
+
   localStorage.setItem("cart", JSON.stringify(cart));
-  alert(name + " added to cart");
+  alert(`${name} x${qty} added to cart`);
+
+  // Reset quantity back to 1
+  if (qtySpan) qtySpan.innerText = 1;
 }
+
 
 // ================= SHOW CART =================
 function showCart() {
@@ -32,10 +47,11 @@ function showCart() {
   let total = 0;
 
   cart.forEach(item => {
-    total += item.price;
+    const itemTotal = item.price * item.qty;
+    total += itemTotal;
 
     const p = document.createElement("p");
-    p.innerText = `${item.name} - ₹${item.price}`;
+    p.innerText = `${item.name} x${item.qty} — ₹${itemTotal}`;
     cartDiv.appendChild(p);
   });
 
@@ -43,6 +59,7 @@ function showCart() {
   totalEl.innerText = `Total: ₹${total}`;
   cartDiv.appendChild(totalEl);
 }
+
 
 // ================= PLACE ORDER =================
 function placeOrder() {
@@ -111,3 +128,4 @@ function loadOrders() {
 
 setInterval(loadOrders, 2000);
 loadOrders();
+
