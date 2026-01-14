@@ -1,305 +1,206 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-<meta charset="UTF-8">
-<title>Gather Game Café – Menu</title>
-<meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <meta charset="UTF-8">
+  <title>Gather Game Café – Menu</title>
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
 
-<style>
-body {
-  margin: 0;
-  font-family: "Trebuchet MS", Arial, sans-serif;
-  background: #2b1a0e;
-}
+  <style>
+    body {
+      margin: 0;
+      font-family: "Trebuchet MS", Arial, sans-serif;
+      background: url("https://i.imgur.com/7QFJ7QG.jpg") no-repeat center center fixed;
+      background-size: cover;
+      color: #2b1a0e;
+    }
 
-.overlay {
-  background: #f5ecd8;
-  min-height: 100vh;
-  padding: 20px;
-}
+    .overlay {
+      background: rgba(245, 236, 220, 0.95);
+      min-height: 100vh;
+      padding: 20px;
+    }
 
-h1 {
-  text-align: center;
-  font-size: 34px;
-  margin-bottom: 4px;
-}
+    h1 {
+      text-align: center;
+      margin-bottom: 10px;
+      font-size: 32px;
+    }
 
-.subtitle {
-  text-align: center;
-  font-size: 14px;
-  margin-bottom: 25px;
-  color: #5a3b1e;
-}
+    .subtitle {
+      text-align: center;
+      font-size: 14px;
+      margin-bottom: 25px;
+      color: #5a3b1e;
+    }
 
-.section {
-  margin-bottom: 35px;
-}
+    .section {
+      margin-bottom: 30px;
+    }
 
-.section h2 {
-  border-bottom: 3px solid #8b5a2b;
-  padding-bottom: 6px;
-  margin-bottom: 15px;
-  font-size: 22px;
-}
+    .section h2 {
+      border-bottom: 3px solid #8b5a2b;
+      padding-bottom: 6px;
+      margin-bottom: 15px;
+      font-size: 22px;
+    }
 
-.menu-item {
-  display: flex;
-  justify-content: space-between;
-  align-items: center;
-  background: #fff8ee;
-  border: 1px solid #c2a476;
-  border-radius: 8px;
-  padding: 12px;
-  margin-bottom: 10px;
-}
+    .menu-item {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      background: #fff8ee;
+      border: 1px solid #c2a476;
+      border-radius: 8px;
+      padding: 12px;
+      margin-bottom: 12px;
+    }
 
-.menu-info h3 {
-  margin: 0;
-  font-size: 17px;
-}
+    .menu-info h3 {
+      margin: 0;
+      font-size: 18px;
+    }
 
-.menu-info .desc {
-  font-size: 13px;
-  font-style: italic;
-  color: #6b4a2d;
-}
+    .menu-info p {
+      margin: 4px 0 0;
+      font-weight: bold;
+    }
 
-.menu-info p {
-  margin: 4px 0 0;
-  font-weight: bold;
-}
+    .menu-item button {
+      background: #8b5a2b;
+      color: white;
+      border: none;
+      border-radius: 6px;
+      padding: 8px 14px;
+      font-size: 14px;
+      cursor: pointer;
+    }
 
-button {
-  background: #8b5a2b;
-  color: white;
-  border: none;
-  border-radius: 6px;
-  padding: 8px 14px;
-  cursor: pointer;
-}
+    .menu-item button:hover {
+      background: #6e451f;
+    }
 
-button:hover {
-  background: #6e451f;
-}
+    .cart-btn {
+      position: fixed;
+      bottom: 20px;
+      left: 50%;
+      transform: translateX(-50%);
+      background: #2f7d32;
+      color: white;
+      padding: 14px 26px;
+      border-radius: 30px;
+      text-decoration: none;
+      font-size: 18px;
+      box-shadow: 0 4px 10px rgba(0,0,0,0.3);
+    }
 
-.cart-btn {
-  position: fixed;
-  bottom: 20px;
-  left: 50%;
-  transform: translateX(-50%);
-  background: #2f7d32;
-  color: white;
-  padding: 14px 26px;
-  border-radius: 30px;
-  text-decoration: none;
-  font-size: 18px;
-  box-shadow: 0 4px 10px rgba(0,0,0,0.3);
-}
-.qty {
-    display: flex;
-    align-items: center;
-    margin-top: 8px;
-}
-.qty button {
-    width: 30px;
-    height: 30px;
-    font-size: 18px;
-}
-.qty span {
-    margin: 0 10px;
-    font-size: 16px;
-}
-</style>
+    .cart-btn:hover {
+      background: #256628;
+    }
+  </style>
 </head>
 
 <body>
-<div class="overlay">
+  <div class="overlay">
 
-<h1>🎲 Gather Game Café</h1>
-<div class="subtitle">Play • Sip • Repeat</div>
+    <h1>🎲 Gather Game Café</h1>
+    <div class="subtitle">Play • Sip • Repeat</div>
 
-<!-- EGGS & BREADS -->
-<div class="section">
-<h2>🍳 Eggs & Breads</h2>
+    <!-- HOT BEVERAGES -->
+    <div class="section">
+      <h2>☕ Hot Beverages</h2>
 
-<div class="menu-item">
-  <div class="menu-info">
-    <h3>Fried Eggs</h3>
-    <span class="desc">Sunny side-up or over easy</span>
-    <p>₹49</p>
+      <div class="menu-item">
+        <div class="menu-info">
+          <h3>Masala Chai</h3>
+          <p>₹49</p>
+        </div>
+        <button onclick="addToCart('Masala Chai', 49)">Add</button>
+      </div>
+
+      <div class="menu-item">
+        <div class="menu-info">
+          <h3>Filter Coffee</h3>
+          <p>₹49</p>
+        </div>
+        <button onclick="addToCart('Filter Coffee', 49)">Add</button>
+      </div>
+
+      <div class="menu-item">
+        <div class="menu-info">
+          <h3>Hot Chocolate</h3>
+          <p>₹99</p>
+        </div>
+        <button onclick="addToCart('Hot Chocolate', 99)">Add</button>
+      </div>
+    </div>
+
+    <!-- STARTERS -->
+    <div class="section">
+      <h2>🍟 Starters</h2>
+
+      <div class="menu-item">
+        <div class="menu-info">
+          <h3>Dice Roll Fries</h3>
+          <p>₹149</p>
+        </div>
+        <button onclick="addToCart('Dice Roll Fries', 149)">Add</button>
+      </div>
+
+      <div class="menu-item">
+        <div class="menu-info">
+          <h3>Cheese Balls</h3>
+          <p>₹179</p>
+        </div>
+        <button onclick="addToCart('Cheese Balls', 179)">Add</button>
+      </div>
+    </div>
+
+    <!-- BURGERS -->
+    <div class="section">
+      <h2>🍔 Burgers & Sandwiches</h2>
+
+      <div class="menu-item">
+        <div class="menu-info">
+          <h3>Veg Burger</h3>
+          <p>₹179</p>
+        </div>
+        <button onclick="addToCart('Veg Burger', 179)">Add</button>
+      </div>
+
+      <div class="menu-item">
+        <div class="menu-info">
+          <h3>Chicken Burger</h3>
+          <p>₹229</p>
+        </div>
+        <button onclick="addToCart('Chicken Burger', 229)">Add</button>
+      </div>
+    </div>
+
+    <!-- PIZZAS -->
+    <div class="section">
+      <h2>🍕 Pizzas</h2>
+
+      <div class="menu-item">
+        <div class="menu-info">
+          <h3>Margherita Pizza</h3>
+          <p>₹219</p>
+        </div>
+        <button onclick="addToCart('Margherita Pizza', 219)">Add</button>
+      </div>
+
+      <div class="menu-item">
+        <div class="menu-info">
+          <h3>Peri Peri Chicken Pizza</h3>
+          <p>₹329</p>
+        </div>
+        <button onclick="addToCart('Peri Peri Chicken Pizza', 329)">Add</button>
+      </div>
+    </div>
+
+    <a href="cart.html" class="cart-btn">🛒 Go to Cart</a>
+
   </div>
-  <button onclick="addToCart('Fried Eggs',49)">Add</button>
-</div>
 
-<div class="menu-item">
-  <div class="menu-info">
-    <h3>Masala Omelette</h3>
-    <span class="desc">Indian-style omelette with onions & spices</span>
-    <p>₹89</p>
-  <div class="qty"><button onclick="changeQty('m1',-1)">-</button><span id="m1">0</span><button onclick="changeQty('m1',1)">+</button></div>
-     </div>
-  <button onclick="addToCart('Masala Omelette', 89, 'm1')">Add</button>
-  </div>
-  
-<div class="menu-item">
-  <div class="menu-info">
-    <h3>Vegetable Omelette</h3>
-    <span class="desc">Loaded with fresh seasonal vegetables</span>
-    <p>₹109</p>
-  </div>
-  <button onclick="addToCart('Vegetable Omelette',109)">Add</button>
-</div>
-
-<div class="menu-item">
-  <div class="menu-info">
-    <h3>Egg Bhurji</h3>
-    <span class="desc">Spicy scrambled eggs, Indian street-style</span>
-    <p>₹99</p>
-  </div>
-  <button onclick="addToCart('Egg Bhurji',99)">Add</button>
-</div>
-</div>
-
-<!-- STARTERS -->
-<div class="section">
-<h2>🍟 Starters</h2>
-
-<div class="menu-item">
-  <div class="menu-info">
-    <h3>Dice Roll Fries</h3>
-    <span class="desc">Crispy golden fries with house seasoning</span>
-    <p>₹149</p>
-  </div>
-  <button onclick="addToCart('Dice Roll Fries',149)">Add</button>
-</div>
-
-<div class="menu-item">
-  <div class="menu-info">
-    <h3>Checkmate Cheese Balls</h3>
-    <span class="desc">Crispy on the outside, gooey cheese inside</span>
-    <p>₹179</p>
-  </div>
-  <button onclick="addToCart('Cheese Balls',179)">Add</button>
-</div>
-
-<div class="menu-item">
-  <div class="menu-info">
-    <h3>Knight’s Nachos (Veg)</h3>
-    <span class="desc">Tortilla chips with salsa & cheese</span>
-    <p>₹199</p>
-  </div>
-  <button onclick="addToCart('Veg Nachos',199)">Add</button>
-</div>
-
-<div class="menu-item">
-  <div class="menu-info">
-    <h3>Knight’s Nachos (Chicken)</h3>
-    <span class="desc">Nachos topped with spicy chicken & cheese</span>
-    <p>₹229</p>
-  </div>
-  <button onclick="addToCart('Chicken Nachos',229)">Add</button>
-</div>
-</div>
-
-<!-- BURGERS & SANDWICHES -->
-<div class="section">
-<h2>🍔 Burgers & Sandwiches</h2>
-
-<div class="menu-item">
-  <div class="menu-info">
-    <h3>Veg Burger</h3>
-    <span class="desc">Classic veggie patty with lettuce & sauce</span>
-    <p>₹179</p>
-  </div>
-  <button onclick="addToCart('Veg Burger',179)">Add</button>
-</div>
-
-<div class="menu-item">
-  <div class="menu-info">
-    <h3>Chicken Burger</h3>
-    <span class="desc">Juicy chicken patty with house mayo</span>
-    <p>₹229</p>
-  </div>
-  <button onclick="addToCart('Chicken Burger',229)">Add</button>
-</div>
-
-<div class="menu-item">
-  <div class="menu-info">
-    <h3>Grilled Veg Sandwich</h3>
-    <span class="desc">Grilled bread with spiced vegetables</span>
-    <p>₹169</p>
-  </div>
-  <button onclick="addToCart('Grilled Veg Sandwich',169)">Add</button>
-</div>
-</div>
-
-<!-- PIZZAS -->
-<div class="section">
-<h2>🍕 Perfectly Played Pizzas</h2>
-
-<div class="menu-item">
-  <div class="menu-info">
-    <h3>Margherita Pizza</h3>
-    <span class="desc">Classic cheese & tomato base</span>
-    <p>₹219</p>
-  </div>
-  <button onclick="addToCart('Margherita Pizza',219)">Add</button>
-</div>
-
-<div class="menu-item">
-  <div class="menu-info">
-    <h3>Peri Peri Chicken Pizza</h3>
-    <span class="desc">Spicy peri peri chicken with mozzarella</span>
-    <p>₹329</p>
-  </div>
-  <button onclick="addToCart('Peri Peri Chicken Pizza',329)">Add</button>
-</div>
-</div>
-
-<!-- DRINKS -->
-<div class="section">
-<h2>☕ Beverages</h2>
-
-<div class="menu-item">
-  <div class="menu-info">
-    <h3>Masala Chai</h3>
-    <span class="desc">Traditional Indian spiced tea</span>
-    <p>₹49</p>
-  </div>
-  <button onclick="addToCart('Masala Chai',49)">Add</button>
-</div>
-
-<div class="menu-item">
-  <div class="menu-info">
-    <h3>Filter Coffee</h3>
-    <span class="desc">South Indian strong coffee</span>
-    <p>₹49</p>
-  </div>
-  <button onclick="addToCart('Filter Coffee',49)">Add</button>
-</div>
-
-<div class="menu-item">
-  <div class="menu-info">
-    <h3>Hot Chocolate</h3>
-    <span class="desc">Rich & creamy cocoa drink</span>
-    <p>₹99</p>
-  </div>
-  <button onclick="addToCart('Hot Chocolate',99)">Add</button>
-</div>
-</div>
-
-<a href="cart.html" class="cart-btn">🛒 Go to Cart</a>
-
-</div>
-
-<script src="script.js"></script>
+  <script src="script.js"></script>
 </body>
 </html>
-
-
-
-
-
-
-
-
