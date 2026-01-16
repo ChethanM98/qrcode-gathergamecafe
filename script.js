@@ -1,111 +1,123 @@
-// ===== TABLE NUMBER =====
-const params = new URLSearchParams(window.location.search);
-if (params.get("table")) {
-  localStorage.setItem("tableNumber", params.get("table"));
+// ===== SECURITY =====
+if (location.pathname.includes("admin.html") &&
+    sessionStorage.getItem("admin") !== "yes") {
+  location.href = "admin-login.html";
 }
-const tableNumber = localStorage.getItem("tableNumber") || "Unknown";
+
+// ===== TAX =====
+const CGST = 2.5;
+const SGST = 2.5;
+
+// ===== TABLE =====
+const params = new URLSearchParams(location.search);
+if (params.get("table")) localStorage.setItem("table", params.get("table"));
+const table = localStorage.getItem("table") || "Unknown";
 
 // ===== CART =====
 let cart = JSON.parse(localStorage.getItem("cart")) || [];
 
-// ===== CHANGE QUANTITY =====
-function changeQty(button, delta) {
-  const span = button.parentElement.querySelector(".qty-value");
-  let qty = parseInt(span.innerText);
-  qty += delta;
-  if (qty < 1) qty = 1;
-  span.innerText = qty;
+// ===== QUANTITY =====
+function changeQty(btn, d) {
+  const span = btn.parentElement.querySelector(".qty-value");
+  let q = parseInt(span.innerText) + d;
+  if (q < 1) q = 1;
+  span.innerText = q;
 }
 
-// ===== ADD TO CART =====
-function addToCartFromUI(button, name, price) {
-  const qtySpan = button
-    .closest(".menu-item")
-    .querySelector(".qty-value");
-
-  const qty = parseInt(qtySpan.innerText);
-
-  const existing = cart.find(item => item.name === name);
-
-  if (existing) {
-    existing.qty += qty;
-  } else {
-    cart.push({ name, price, qty });
-  }
-
+// ===== ADD =====
+function addToCartFromUI(btn, name, price) {
+  const qty = parseInt(btn.closest(".menu-item").querySelector(".qty-value").innerText);
+  const found = cart.find(i => i.name === name);
+  if (found) found.qty += qty;
+  else cart.push({ name, price, qty });
   localStorage.setItem("cart", JSON.stringify(cart));
-  alert(`${name} x${qty} added to cart`);
-
-  qtySpan.innerText = 1;
+  alert(`${name} x${qty} added`);
 }
 
 // ===== SHOW CART =====
 function showCart() {
   const div = document.getElementById("cartItems");
   if (!div) return;
-
   div.innerHTML = "";
-  if (cart.length === 0) {
-    div.innerHTML = "<p>No items in cart</p>";
-    return;
-  }
-
-  let total = 0;
-  cart.forEach(item => {
-    const itemTotal = item.price * item.qty;
-    total += itemTotal;
-    div.innerHTML += `<p>${item.name} x${item.qty} – ₹${itemTotal}</p>`;
-  });
-
-  div.innerHTML += `<h3>Total: ₹${total}</h3>`;
+  cart.forEach(i => div.innerHTML += `<p>${i.name} x${i.qty}</p>`);
 }
 
 // ===== PLACE ORDER =====
 function placeOrder() {
   fetch("/order", {
-    method: "POST",
-    headers: { "Content-Type": "application/json" },
-    body: JSON.stringify({
-      table: tableNumber,
-      items: cart
-    })
-  })
-  .then(res => res.json())
-  .then(() => {
-    cart = [];
+    method:"POST",
+    headers:{ "Content-Type":"application/json" },
+    body:JSON.stringify({ table, items:cart })
+  }).then(() => {
     localStorage.removeItem("cart");
-    showCart();
-    alert("Order placed!");
-    window.location.href = "index.html?table=" + tableNumber;
+    cart = [];
+    alert("Order placed");
+    location.href = "index.html?table=" + table;
   });
 }
 
-// ===== KITCHEN =====
+// ===== ADMIN =====
 function loadOrders() {
-  fetch("/orders")
-    .then(res => res.json())
-    .then(data => {
-      const div = document.getElementById("orders");
-      if (!div) return;
+  fetch("/orders").then(r=>r.json()).then(data=>{
+    const div = document.getElementById("orders");
+    if (!div) return;
+    div.innerHTML = "";
+    data.forEach(o=>{
+      const items = JSON.parse(o.items);
+      let subtotal = 0;
+      let lines = items.map(i=>{
+        let t = i.price * i.qty;
+        subtotal += t;
+        return `${i.name} x${i.qty} – ₹${t}`;
+      }).join("<br>");
 
-      div.innerHTML = "";
-      data.forEach(order => {
-        const box = document.createElement("div");
-        box.className = "order-box";
+      const cgst = subtotal * CGST/100;
+      const sgst = subtotal * SGST/100;
+      const total = subtotal + cgst + sgst;
 
-        const items = JSON.parse(order.items)
-          .map(i => `${i.name} x${i.qty}`)
-          .join(", ");
-
-        box.innerHTML = `
-          <strong>Table ${order.table_no}</strong><br>
-          ${items}
-        `;
-        div.appendChild(box);
-      });
+      div.innerHTML += `
+      <div class="order-box">
+        <div class="invoice">
+          <h3>Gather Game Café</h3>
+          GSTIN: 29ABCDE1234F1Z5<br>
+          Invoice: INV-${o.id}<br>
+          Date: ${new Date().toLocaleDateString("en-IN")}<br>
+          Table: ${o.table_no}<br><br>
+          ${lines}<hr>
+          <div class="line"><span>Subtotal</span><span>₹${subtotal}</span></div>
+          <div class="line"><span>CGST 2.5%</span><span>₹${cgst}</span></div>
+          <div class="line"><span>SGST 2.5%</span><span>₹${sgst}</span></div>
+          <div class="line"><b>Total</b><b>₹${total}</b></div>
+        </div>
+        <select id="pay-${o.id}">
+          <option>Cash</option>
+          <option>UPI</option>
+        </select>
+        <button onclick="window.print()">Print</button>
+        <button onclick="closeOrder(${o.id},${total})">Close</button>
+      </div>`;
     });
+  });
+}
+
+function closeOrder(id,total) {
+  const mode = document.getElementById(`pay-${id}`).value;
+  fetch(`/close-order/${id}`,{
+    method:"POST",
+    headers:{ "Content-Type":"application/json" },
+    body:JSON.stringify({ total, payment_mode:mode })
+  }).then(()=>loadOrders());
+}
+
+function exportExcel() { window.open("/export"); }
+
+function loadMonthly() {
+  fetch("/monthly").then(r=>r.json()).then(d=>{
+    document.getElementById("report").innerHTML =
+      d.map(m=>`${m.month}: ₹${m.total}`).join("<br>");
+  });
 }
 
 showCart();
 loadOrders();
-setInterval(loadOrders, 2000);
+setInterval(loadOrders,3000);
