@@ -1,3 +1,7 @@
+// ===== CONFIG (CHANGE IF NEEDED) =====
+const GST_PERCENT = 5;          // 5% GST
+const SERVICE_CHARGE_PERCENT = 0;
+
 // ===== TABLE NUMBER =====
 const params = new URLSearchParams(window.location.search);
 if (params.get("table")) {
@@ -19,14 +23,10 @@ function changeQty(button, delta) {
 
 // ===== ADD TO CART =====
 function addToCartFromUI(button, name, price) {
-  const qtySpan = button
-    .closest(".menu-item")
-    .querySelector(".qty-value");
-
+  const qtySpan = button.closest(".menu-item").querySelector(".qty-value");
   const qty = parseInt(qtySpan.innerText);
 
-  const existing = cart.find(item => item.name === name);
-
+  const existing = cart.find(i => i.name === name);
   if (existing) {
     existing.qty += qty;
   } else {
@@ -34,30 +34,42 @@ function addToCartFromUI(button, name, price) {
   }
 
   localStorage.setItem("cart", JSON.stringify(cart));
-  alert(`${name} x${qty} added to cart`);
-
+  alert(`${name} x${qty} added`);
   qtySpan.innerText = 1;
 }
 
-// ===== SHOW CART =====
+// ===== SHOW BILL =====
 function showCart() {
-  const div = document.getElementById("cartItems");
-  if (!div) return;
+  const billDiv = document.getElementById("bill");
+  if (!billDiv) return;
 
-  div.innerHTML = "";
-  if (cart.length === 0) {
-    div.innerHTML = "<p>No items in cart</p>";
-    return;
-  }
+  billDiv.innerHTML = "";
+  let subtotal = 0;
 
-  let total = 0;
   cart.forEach(item => {
-    const itemTotal = item.price * item.qty;
-    total += itemTotal;
-    div.innerHTML += `<p>${item.name} x${item.qty} – ₹${itemTotal}</p>`;
+    const lineTotal = item.price * item.qty;
+    subtotal += lineTotal;
+
+    billDiv.innerHTML += `
+      <div class="row">
+        <span>${item.name} x${item.qty}</span>
+        <span>₹${lineTotal}</span>
+      </div>
+    `;
   });
 
-  div.innerHTML += `<h3>Total: ₹${total}</h3>`;
+  const gst = (subtotal * GST_PERCENT) / 100;
+  const serviceCharge = (subtotal * SERVICE_CHARGE_PERCENT) / 100;
+  const grandTotal = subtotal + gst + serviceCharge;
+
+  billDiv.innerHTML += `
+    <hr>
+    <div class="row"><span>Subtotal</span><span>₹${subtotal.toFixed(2)}</span></div>
+    <div class="row"><span>GST (${GST_PERCENT}%)</span><span>₹${gst.toFixed(2)}</span></div>
+    <div class="row"><span>Service Charge</span><span>₹${serviceCharge.toFixed(2)}</span></div>
+    <div class="row total"><span>Total</span><span>₹${grandTotal.toFixed(2)}</span></div>
+    <p>Table: ${tableNumber}</p>
+  `;
 }
 
 // ===== PLACE ORDER =====
@@ -70,11 +82,9 @@ function placeOrder() {
       items: cart
     })
   })
-  .then(res => res.json())
   .then(() => {
     cart = [];
     localStorage.removeItem("cart");
-    showCart();
     alert("Order placed!");
     window.location.href = "index.html?table=" + tableNumber;
   });
@@ -92,15 +102,11 @@ function loadOrders() {
       data.forEach(order => {
         const box = document.createElement("div");
         box.className = "order-box";
-
         const items = JSON.parse(order.items)
           .map(i => `${i.name} x${i.qty}`)
           .join(", ");
 
-        box.innerHTML = `
-          <strong>Table ${order.table_no}</strong><br>
-          ${items}
-        `;
+        box.innerHTML = `<strong>Table ${order.table_no}</strong><br>${items}`;
         div.appendChild(box);
       });
     });
