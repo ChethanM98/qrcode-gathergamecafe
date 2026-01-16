@@ -8,11 +8,9 @@
 <script>
 function login() {
   if (document.getElementById("pin").value === "1234") {
-    sessionStorage.setItem("admin", "yes");
-    window.location.href = "admin.html";
-  } else {
-    alert("Wrong PIN");
-  }
+    sessionStorage.setItem("admin","yes");
+    location.href="admin.html";
+  } else alert("Wrong PIN");
 }
 </script>
 </body>
