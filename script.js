@@ -1,4 +1,4 @@
-// ===== SECURITY =====
+// ===== ADMIN SECURITY =====
 if (location.pathname.includes("admin.html") &&
     sessionStorage.getItem("admin") !== "yes") {
   location.href = "admin-login.html";
@@ -24,7 +24,7 @@ function changeQty(btn, d) {
   span.innerText = q;
 }
 
-// ===== ADD =====
+// ===== ADD TO CART =====
 function addToCartFromUI(btn, name, price) {
   const qty = parseInt(btn.closest(".menu-item").querySelector(".qty-value").innerText);
   const found = cart.find(i => i.name === name);
@@ -56,17 +56,23 @@ function placeOrder() {
   });
 }
 
-// ===== ADMIN =====
+// ===== ADMIN LOAD (TABLE-WISE) =====
 function loadOrders() {
   fetch("/orders").then(r=>r.json()).then(data=>{
     const div = document.getElementById("orders");
     if (!div) return;
     div.innerHTML = "";
-    data.forEach(o=>{
-      const items = JSON.parse(o.items);
+
+    data.forEach(row=>{
+      const merged = {};
+      JSON.parse(row.items).forEach(i=>{
+        if (!merged[i.name]) merged[i.name] = {...i};
+        else merged[i.name].qty += i.qty;
+      });
+
       let subtotal = 0;
-      let lines = items.map(i=>{
-        let t = i.price * i.qty;
+      const lines = Object.values(merged).map(i=>{
+        const t = i.price * i.qty;
         subtotal += t;
         return `${i.name} x${i.qty} – ₹${t}`;
       }).join("<br>");
@@ -76,42 +82,45 @@ function loadOrders() {
       const total = subtotal + cgst + sgst;
 
       div.innerHTML += `
-      <div class="order-box">
+      <div class="table-box">
         <div class="invoice">
           <h3>Gather Game Café</h3>
           GSTIN: 29ABCDE1234F1Z5<br>
-          Invoice: INV-${o.id}<br>
+          Invoice: INV-${row.table_no}<br>
           Date: ${new Date().toLocaleDateString("en-IN")}<br>
-          Table: ${o.table_no}<br><br>
-          ${lines}<hr>
+          Table: ${row.table_no}<br><br>
+          ${lines}
+          <hr>
           <div class="line"><span>Subtotal</span><span>₹${subtotal}</span></div>
           <div class="line"><span>CGST 2.5%</span><span>₹${cgst}</span></div>
           <div class="line"><span>SGST 2.5%</span><span>₹${sgst}</span></div>
           <div class="line"><b>Total</b><b>₹${total}</b></div>
         </div>
-        <select id="pay-${o.id}">
+
+        <select id="pay-${row.table_no}">
           <option>Cash</option>
           <option>UPI</option>
-        </select>
-        <button onclick="window.print()">Print</button>
-        <button onclick="closeOrder(${o.id},${total})">Close</button>
+        </select><br>
+
+        <button onclick="window.print()">Print Invoice</button>
+        <button onclick="closeTable('${row.table_no}',${total})">Close Bill</button>
       </div>`;
     });
   });
 }
 
-function closeOrder(id,total) {
-  const mode = document.getElementById(`pay-${id}`).value;
-  fetch(`/close-order/${id}`,{
+function closeTable(tableNo,total) {
+  const mode = document.getElementById(`pay-${tableNo}`).value;
+  fetch("/close-table",{
     method:"POST",
     headers:{ "Content-Type":"application/json" },
-    body:JSON.stringify({ total, payment_mode:mode })
+    body:JSON.stringify({ table:tableNo, total, payment_mode:mode })
   }).then(()=>loadOrders());
 }
 
-function exportExcel() { window.open("/export"); }
+function exportExcel(){ window.open("/export"); }
 
-function loadMonthly() {
+function loadMonthly(){
   fetch("/monthly").then(r=>r.json()).then(d=>{
     document.getElementById("report").innerHTML =
       d.map(m=>`${m.month}: ₹${m.total}`).join("<br>");
