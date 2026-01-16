@@ -1,21 +1,30 @@
-// ================= TABLE NUMBER =================
+// ===== TABLE NUMBER =====
 const params = new URLSearchParams(window.location.search);
-
 if (params.get("table")) {
   localStorage.setItem("tableNumber", params.get("table"));
 }
-
 const tableNumber = localStorage.getItem("tableNumber") || "Unknown";
 
-// ================= CART STORAGE =================
+// ===== CART =====
 let cart = JSON.parse(localStorage.getItem("cart")) || [];
 
-// ================= ADD TO CART =================
-function addToCart(name, price) {
-  const qtySpan = document.getElementById(`qty-${name}`);
-  const qty = qtySpan ? parseInt(qtySpan.innerText) : 1;
+// ===== CHANGE QUANTITY =====
+function changeQty(button, delta) {
+  const span = button.parentElement.querySelector(".qty-value");
+  let qty = parseInt(span.innerText);
+  qty += delta;
+  if (qty < 1) qty = 1;
+  span.innerText = qty;
+}
 
-  // Check if item already exists
+// ===== ADD TO CART =====
+function addToCartFromUI(button, name, price) {
+  const qtySpan = button
+    .closest(".menu-item")
+    .querySelector(".qty-value");
+
+  const qty = parseInt(qtySpan.innerText);
+
   const existing = cart.find(item => item.name === name);
 
   if (existing) {
@@ -27,47 +36,32 @@ function addToCart(name, price) {
   localStorage.setItem("cart", JSON.stringify(cart));
   alert(`${name} x${qty} added to cart`);
 
-  // Reset quantity back to 1
-  if (qtySpan) qtySpan.innerText = 1;
+  qtySpan.innerText = 1;
 }
 
-
-// ================= SHOW CART =================
+// ===== SHOW CART =====
 function showCart() {
-  const cartDiv = document.getElementById("cartItems");
-  if (!cartDiv) return;
+  const div = document.getElementById("cartItems");
+  if (!div) return;
 
-  cartDiv.innerHTML = "";
-
+  div.innerHTML = "";
   if (cart.length === 0) {
-    cartDiv.innerHTML = "<p>No items in cart</p>";
+    div.innerHTML = "<p>No items in cart</p>";
     return;
   }
 
   let total = 0;
-
   cart.forEach(item => {
     const itemTotal = item.price * item.qty;
     total += itemTotal;
-
-    const p = document.createElement("p");
-    p.innerText = `${item.name} x${item.qty} — ₹${itemTotal}`;
-    cartDiv.appendChild(p);
+    div.innerHTML += `<p>${item.name} x${item.qty} – ₹${itemTotal}</p>`;
   });
 
-  const totalEl = document.createElement("h3");
-  totalEl.innerText = `Total: ₹${total}`;
-  cartDiv.appendChild(totalEl);
+  div.innerHTML += `<h3>Total: ₹${total}</h3>`;
 }
 
-
-// ================= PLACE ORDER =================
+// ===== PLACE ORDER =====
 function placeOrder() {
-  if (cart.length === 0) {
-    alert("Cart is empty");
-    return;
-  }
-
   fetch("/order", {
     method: "POST",
     headers: { "Content-Type": "application/json" },
@@ -81,51 +75,38 @@ function placeOrder() {
     cart = [];
     localStorage.removeItem("cart");
     showCart();
-
-    alert("Order placed successfully. Please pay at the counter.");
+    alert("Order placed!");
     window.location.href = "index.html?table=" + tableNumber;
-  })
-  .catch(err => {
-    console.error(err);
-    alert("Order failed");
   });
 }
 
-// ================= LOAD CART =================
-showCart();
-
-// ================= LOAD KITCHEN ORDERS =================
+// ===== KITCHEN =====
 function loadOrders() {
   fetch("/orders")
     .then(res => res.json())
     .then(data => {
-      const ordersDiv = document.getElementById("orders");
-      if (!ordersDiv) return;
+      const div = document.getElementById("orders");
+      if (!div) return;
 
-      ordersDiv.innerHTML = "";
-
+      div.innerHTML = "";
       data.forEach(order => {
-        const orderBox = document.createElement("div");
-        orderBox.className = "order-box";
+        const box = document.createElement("div");
+        box.className = "order-box";
 
-        const items = JSON.parse(order.items);
-
-        const itemText = items
-          .map(i => `${i.name} (₹${i.price})`)
+        const items = JSON.parse(order.items)
+          .map(i => `${i.name} x${i.qty}`)
           .join(", ");
 
-        orderBox.innerHTML = `
-          <strong>Order #${order.id}</strong><br>
-          <strong>Table:</strong> ${order.table_no}<br>
-          <strong>Items:</strong> ${itemText}<br>
-          <small>${order.created_at}</small>
+        box.innerHTML = `
+          <strong>Table ${order.table_no}</strong><br>
+          ${items}
         `;
-
-        ordersDiv.appendChild(orderBox);
+        div.appendChild(box);
       });
     });
 }
 
-setInterval(loadOrders, 2000);
+showCart();
 loadOrders();
+setInterval(loadOrders, 2000);
 
