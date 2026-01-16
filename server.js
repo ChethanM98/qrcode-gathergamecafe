@@ -1,46 +1,61 @@
 const express = require("express");
 const sqlite3 = require("sqlite3").verbose();
+const ExcelJS = require("exceljs");
 const path = require("path");
 
 const app = express();
-const PORT = process.env.PORT || 3000;
-
 app.use(express.json());
 app.use(express.static(path.join(__dirname)));
-
 const db = new sqlite3.Database("orders.db");
 
-db.run(`
-CREATE TABLE IF NOT EXISTS orders (
-  id INTEGER PRIMARY KEY AUTOINCREMENT,
+db.run(`CREATE TABLE IF NOT EXISTS orders (
+  id INTEGER PRIMARY KEY,
   table_no TEXT,
-  items TEXT,
-  created_at DATETIME DEFAULT CURRENT_TIMESTAMP
-)
-`);
+  items TEXT
+)`);
 
-app.post("/order", (req, res) => {
-  db.run(
-    "INSERT INTO orders (table_no, items) VALUES (?, ?)",
-    [req.body.table, JSON.stringify(req.body.items)],
-    () => res.json({ success: true })
-  );
+db.run(`CREATE TABLE IF NOT EXISTS sales (
+  id INTEGER PRIMARY KEY,
+  total REAL,
+  payment_mode TEXT,
+  created_at DATE DEFAULT (date('now'))
+)`);
+
+app.post("/order",(r,s)=>{
+  db.run("INSERT INTO orders VALUES(NULL,?,?)",
+  [r.body.table,JSON.stringify(r.body.items)],()=>s.json({}));
 });
 
-app.get("/orders", (req, res) => {
-  db.all("SELECT * FROM orders ORDER BY id DESC", (err, rows) => {
-    res.json(rows || []);
+app.get("/orders",(r,s)=>{
+  db.all("SELECT * FROM orders",(e,d)=>s.json(d));
+});
+
+app.post("/close-order/:id",(r,s)=>{
+  db.run("INSERT INTO sales VALUES(NULL,?,?,date('now'))",
+    [r.body.total,r.body.payment_mode]);
+  db.run("DELETE FROM orders WHERE id=?",[r.params.id]);
+  s.json({});
+});
+
+app.get("/export",(r,s)=>{
+  const wb=new ExcelJS.Workbook();
+  const ws=wb.addWorksheet("Sales");
+  ws.columns=[
+    {header:"Total",key:"total"},
+    {header:"Mode",key:"mode"},
+    {header:"Date",key:"date"}
+  ];
+  db.all("SELECT * FROM sales",(e,rw)=>{
+    rw.forEach(r=>ws.addRow({total:r.total,mode:r.payment_mode,date:r.created_at}));
+    s.setHeader("Content-Disposition","attachment; filename=sales.xlsx");
+    wb.xlsx.write(s).then(()=>s.end());
   });
 });
 
-app.get("/", (req, res) => {
-  res.sendFile(path.join(__dirname, "index.html"));
+app.get("/monthly",(r,s)=>{
+  db.all(`SELECT strftime('%Y-%m',created_at) m, SUM(total) total FROM sales GROUP BY m`,
+    (e,rw)=>s.json(rw));
 });
 
-// Start server
-
-app.listen(PORT, () => {
-  console.log("Server running on port", PORT);
-});
-
+app.listen(3000,()=>console.log("Server running"));
 
