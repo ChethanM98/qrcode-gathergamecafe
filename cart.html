@@ -1,39 +1,14 @@
 <!DOCTYPE html>
 <html>
 <head>
-  <title>Your Bill</title>
-  <style>
-    body { font-family: Arial; padding: 20px; }
-    .bill-box {
-      border: 2px dashed #333;
-      padding: 15px;
-      max-width: 400px;
-    }
-    .row {
-      display: flex;
-      justify-content: space-between;
-      margin: 6px 0;
-    }
-    .total {
-      font-weight: bold;
-      font-size: 18px;
-      margin-top: 10px;
-    }
-    button {
-      margin-top: 15px;
-      padding: 10px 18px;
-      font-size: 16px;
-    }
-  </style>
+<title>Your Cart</title>
 </head>
 <body>
 
-<h1>🧾 Your Bill</h1>
-
-<div id="bill" class="bill-box"></div>
+<h1>Your Order</h1>
+<div id="cartItems"></div>
 
 <button onclick="placeOrder()">Place Order</button>
-<button onclick="window.print()">🖨 Print Receipt</button>
 
 <script src="script.js"></script>
 </body>
