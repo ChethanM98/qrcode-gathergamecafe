@@ -1,26 +1,28 @@
 <!DOCTYPE html>
 <html>
 <head>
-<title>Kitchen Orders</title>
+<title>Admin POS</title>
 <style>
-body {
-  font-family: Arial;
-  background: #f5f5f5;
-}
-.order-box {
-  background: white;
-  border: 2px solid #333;
-  padding: 12px;
-  margin: 12px;
+body { font-family: Arial; background:#f2f2f2; }
+.order-box { background:#fff; padding:14px; margin:14px; border:2px solid #333; }
+.invoice { border:1px solid #000; padding:10px; margin-top:10px; }
+.line { display:flex; justify-content:space-between; }
+@media print {
+  body * { visibility:hidden; }
+  .invoice, .invoice * { visibility:visible; }
 }
 </style>
 </head>
 <body>
 
-<h1>Kitchen Orders</h1>
+<h1>🍽️ Kitchen & Billing</h1>
 <div id="orders"></div>
+
+<h2>📊 Reports</h2>
+<button onclick="exportExcel()">Export Daily Excel</button>
+<button onclick="loadMonthly()">Monthly Summary</button>
+<div id="report"></div>
 
 <script src="script.js"></script>
 </body>
 </html>
-
