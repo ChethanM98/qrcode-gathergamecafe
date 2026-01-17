@@ -59,18 +59,38 @@ body {
 <script>
 document.addEventListener("DOMContentLoaded", function () {
 
+  /* ================================
+     1. GET TABLE NUMBER FROM URL
+     Example: menu.html?table=5
+  ================================= */
+  const params = new URLSearchParams(window.location.search);
+  const tableNo = params.get("table") || "default";
+  const CART_KEY = `cart_table_${tableNo}`;
+
+  /* ================================
+     2. MENU DATA (SAMPLE)
+     (Replace later with full menu)
+  ================================= */
   const menuData = [
     { name: "Masala Chai", price: 49 },
     { name: "Coffee", price: 59 }
   ];
 
+  /* ================================
+     3. DOM REFERENCES
+  ================================= */
   const menu = document.getElementById("menu");
-  const cartList = document.getElementById("cart-list");
+  const cartList = document.getElementById("cart-list"); // debug (optional)
   const cartCountEl = document.getElementById("cart-count");
 
-  // STEP 4: Load cart from localStorage
-  let cart = JSON.parse(localStorage.getItem("cart")) || {};
+  /* ================================
+     4. LOAD CART (TABLE-WISE)
+  ================================= */
+  let cart = JSON.parse(localStorage.getItem(CART_KEY)) || {};
 
+  /* ================================
+     5. RENDER MENU
+  ================================= */
   menu.innerHTML = menuData.map(item => `
     <div class="menu-item" data-name="${item.name}">
       <div>
@@ -93,8 +113,11 @@ document.addEventListener("DOMContentLoaded", function () {
     </div>
   `).join("");
 
+  /* ================================
+     6. HELPERS
+  ================================= */
   function saveCart() {
-    localStorage.setItem("cart", JSON.stringify(cart));
+    localStorage.setItem(CART_KEY, JSON.stringify(cart));
   }
 
   function updateCartCount() {
@@ -106,6 +129,7 @@ document.addEventListener("DOMContentLoaded", function () {
   }
 
   function renderCartDebug() {
+    if (!cartList) return;
     cartList.innerHTML = "";
     for (const name in cart) {
       const li = document.createElement("li");
@@ -127,11 +151,13 @@ document.addEventListener("DOMContentLoaded", function () {
       qtyControl.style.display = "flex";
       qtySpan.innerText = cart[name].qty;
     }
-
     updateCartCount();
     renderCartDebug();
   }
 
+  /* ================================
+     7. UI ACTIONS
+  ================================= */
   window.showQty = function (btn, name, price) {
     btn.style.display = "none";
     btn.parentElement.querySelector(".qty-control").style.display = "flex";
@@ -161,7 +187,9 @@ document.addEventListener("DOMContentLoaded", function () {
     renderCartDebug();
   };
 
-  // 🔁 Restore cart on page load
+  /* ================================
+     8. RESTORE ON PAGE LOAD
+  ================================= */
   restoreUIFromCart();
 
 });
@@ -169,6 +197,7 @@ document.addEventListener("DOMContentLoaded", function () {
 
 </body>
 </html>
+
 
 
 
