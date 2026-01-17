@@ -1,4 +1,3 @@
-
 // ===== ADMIN SECURITY =====
 if (location.pathname.includes("admin.html") &&
     sessionStorage.getItem("admin") !== "yes") {
@@ -9,6 +8,9 @@ if (location.pathname.includes("admin.html") &&
 const CGST = 2.5;
 const SGST = 2.5;
 
+// ===== PAYMENT MEMORY =====
+const paymentSelection = {};
+
 // ===== TABLE =====
 const params = new URLSearchParams(location.search);
 if (params.get("table")) localStorage.setItem("table", params.get("table"));
@@ -18,16 +20,18 @@ const table = localStorage.getItem("table") || "Unknown";
 let cart = JSON.parse(localStorage.getItem("cart")) || [];
 
 // ===== QUANTITY =====
-function changeQty(btn, d) {
+function changeQty(btn, delta) {
   const span = btn.parentElement.querySelector(".qty-value");
-  let q = parseInt(span.innerText) + d;
-  if (q < 1) q = 1;
-  span.innerText = q;
+  let qty = parseInt(span.innerText) + delta;
+  if (qty < 1) qty = 1;
+  span.innerText = qty;
 }
 
 // ===== ADD TO CART =====
 function addToCartFromUI(btn, name, price) {
-  const qty = parseInt(btn.closest(".menu-item").querySelector(".qty-value").innerText);
+  const qty = parseInt(
+    btn.closest(".menu-item").querySelector(".qty-value").innerText
+  );
   const found = cart.find(i => i.name === name);
   if (found) found.qty += qty;
   else cart.push({ name, price, qty });
@@ -39,9 +43,28 @@ function addToCartFromUI(btn, name, price) {
 function showCart() {
   const div = document.getElementById("cartItems");
   if (!div) return;
+
   div.innerHTML = "";
-  cart.forEach(i => div.innerHTML += `<p>${i.name} x${i.qty}</p>`);
+  let total = 0;
+
+  cart.forEach(item => {
+    const lineTotal = item.price * item.qty;
+    total += lineTotal;
+
+    div.innerHTML += `
+      <p>
+        ${item.name} x${item.qty}
+        — ₹${lineTotal.toFixed(2)}
+      </p>
+    `;
+  });
+
+  div.innerHTML += `
+    <hr>
+    <h3>Total: ₹${total.toFixed(2)}</h3>
+  `;
 }
+
 
 // ===== PLACE ORDER =====
 function placeOrder() {
@@ -57,78 +80,108 @@ function placeOrder() {
   });
 }
 
-// ===== ADMIN LOAD (TABLE-WISE) =====
+// ===== ADMIN LOAD ORDERS (TABLE-WISE) =====
 function loadOrders() {
-  fetch("/orders").then(r=>r.json()).then(data=>{
-    const div = document.getElementById("orders");
-    if (!div) return;
-    div.innerHTML = "";
+  fetch("/orders")
+    .then(r => r.json())
+    .then(rows => {
+      const div = document.getElementById("orders");
+      if (!div) return;
+      div.innerHTML = "";
 
-    data.forEach(row=>{
-      const merged = {};
-      JSON.parse(row.items).forEach(i=>{
-        if (!merged[i.name]) merged[i.name] = {...i};
-        else merged[i.name].qty += i.qty;
+      const tableMap = {};
+
+      rows.forEach(r => {
+        if (!tableMap[r.table_no]) tableMap[r.table_no] = [];
+        tableMap[r.table_no].push(...JSON.parse(r.items));
       });
 
-      let subtotal = 0;
-      const lines = Object.values(merged).map(i=>{
-        const t = i.price * i.qty;
-        subtotal += t;
-        return `${i.name} x${i.qty} – ₹${t}`;
-      }).join("<br>");
+      Object.keys(tableMap).forEach(tableNo => {
+        const merged = {};
+        let subtotal = 0;
 
-      const cgst = subtotal * CGST/100;
-      const sgst = subtotal * SGST/100;
-      const total = subtotal + cgst + sgst;
+        tableMap[tableNo].forEach(i => {
+          if (!merged[i.name]) merged[i.name] = {...i};
+          else merged[i.name].qty += i.qty;
+        });
 
-      div.innerHTML += `
-      <div class="table-box">
-        <div class="invoice">
-          <h3>Gather Game Café</h3>
-          GSTIN: 29ABCDE1234F1Z5<br>
-          Invoice: INV-${row.table_no}<br>
-          Date: ${new Date().toLocaleDateString("en-IN")}<br>
-          Table: ${row.table_no}<br><br>
-          ${lines}
-          <hr>
-          <div class="line"><span>Subtotal</span><span>₹${subtotal}</span></div>
-          <div class="line"><span>CGST 2.5%</span><span>₹${cgst}</span></div>
-          <div class="line"><span>SGST 2.5%</span><span>₹${sgst}</span></div>
-          <div class="line"><b>Total</b><b>₹${total}</b></div>
-        </div>
+        const lines = Object.values(merged).map(i => {
+          const t = i.price * i.qty;
+          subtotal += t;
+          return `${i.name} x${i.qty} – ₹${t}`;
+        }).join("<br>");
 
-        <select id="pay-${row.table_no}">
-          <option>Cash</option>
-          <option>UPI</option>
-        </select><br>
+        const cgst = subtotal * 0.025;
+        const sgst = subtotal * 0.025;
+        const total = subtotal + cgst + sgst;
 
-        <button onclick="window.print()">Print Invoice</button>
-        <button onclick="closeTable('${row.table_no}',${total})">Close Bill</button>
-      </div>`;
+        const selectedMode = paymentSelection[tableNo] || "Cash";
+
+        const selectHTML = `
+          <select id="pay-${tableNo}" onchange="savePayment('${tableNo}')">
+            <option value="Cash" ${selectedMode==="Cash"?"selected":""}>Cash</option>
+            <option value="UPI" ${selectedMode==="UPI"?"selected":""}>UPI</option>
+          </select>
+        `;
+
+        div.innerHTML += `
+        <div class="table-box">
+          <div class="invoice">
+            <h3>Gather Game Café</h3>
+            GSTIN: 29ABCDE1234F1Z5<br>
+            Invoice: INV-${tableNo}<br>
+            Date: ${new Date().toLocaleDateString("en-IN")}<br>
+            Table: ${tableNo}<br><br>
+            ${lines}
+            <hr>
+            <div class="line"><span>Subtotal</span><span>₹${subtotal.toFixed(2)}</span></div>
+            <div class="line"><span>CGST 2.5%</span><span>₹${cgst.toFixed(2)}</span></div>
+            <div class="line"><span>SGST 2.5%</span><span>₹${sgst.toFixed(2)}</span></div>
+            <div class="line"><b>Total</b><b>₹${total.toFixed(2)}</b></div>
+          </div>
+
+          ${selectHTML}<br>
+          <button onclick="window.print()">Print Invoice</button>
+          <button onclick="closeTable('${tableNo}', ${total})">Close Bill</button>
+        </div>`;
+      });
     });
-  });
 }
 
-function closeTable(tableNo,total) {
-  const mode = document.getElementById(`pay-${tableNo}`).value;
-  fetch("/close-table",{
+function savePayment(tableNo) {
+  paymentSelection[tableNo] =
+    document.getElementById(`pay-${tableNo}`).value;
+}
+
+function closeTable(tableNo, total) {
+  const mode = paymentSelection[tableNo] || "Cash";
+  fetch("/close-table", {
     method:"POST",
     headers:{ "Content-Type":"application/json" },
     body:JSON.stringify({ table:tableNo, total, payment_mode:mode })
-  }).then(()=>loadOrders());
+  }).then(() => {
+    delete paymentSelection[tableNo];
+    loadOrders();
+  });
 }
 
-function exportExcel(){ window.open("/export"); }
-
-function loadMonthly(){
-  fetch("/monthly").then(r=>r.json()).then(d=>{
-    document.getElementById("report").innerHTML =
-      d.map(m=>`${m.month}: ₹${m.total}`).join("<br>");
-  });
+// ===== REPORTS =====
+function exportDailySummaryExcel() {
+  window.open("/export-daily-summary");
+}
+function exportMonthlyExcel() {
+  window.open("/export-monthly");
+}
+function loadMonthly() {
+  fetch("/monthly")
+    .then(r=>r.json())
+    .then(d=>{
+      document.getElementById("report").innerHTML =
+        d.map(m=>`${m.month}: ₹${m.total}`).join("<br>");
+    });
 }
 
 showCart();
 loadOrders();
-setInterval(loadOrders,15000);
+setInterval(loadOrders, 10000);
 
