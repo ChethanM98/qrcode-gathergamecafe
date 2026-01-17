@@ -1,3 +1,6 @@
+// ===== TEMP PAYMENT MODE STORE (ADMIN) =====
+const paymentSelection = {};
+
 // ===== ADMIN SECURITY =====
 if (location.pathname.includes("admin.html") &&
     sessionStorage.getItem("admin") !== "yes") {
@@ -99,39 +102,30 @@ function loadOrders() {
         const cgst = subtotal * 0.025;
         const sgst = subtotal * 0.025;
         const total = subtotal + cgst + sgst;
+const selectedMode = paymentSelection[tableNo] || "Cash";
 
-        div.innerHTML += `
-        <div class="table-box">
-          <div class="invoice">
-            <h3>Gather Game Café</h3>
-            GSTIN: 29ABCDE1234F1Z5<br>
-            Invoice: INV-${tableNo}<br>
-            Date: ${new Date().toLocaleDateString("en-IN")}<br>
-            Table: ${tableNo}<br><br>
+const selectHTML = `
+<select id="pay-${tableNo}" onchange="savePayment('${tableNo}')">
+  <option value="Cash" ${selectedMode === "Cash" ? "selected" : ""}>Cash</option>
+  <option value="UPI" ${selectedMode === "UPI" ? "selected" : ""}>UPI</option>
+</select>
+`;
 
-            ${lines}
-            <hr>
+div.innerHTML += `
+  <div class="table-box">
+    <div class="invoice">
+      ...
+    </div>
 
-            <div class="line"><span>Subtotal</span><span>₹${subtotal.toFixed(2)}</span></div>
-            <div class="line"><span>CGST 2.5%</span><span>₹${cgst.toFixed(2)}</span></div>
-            <div class="line"><span>SGST 2.5%</span><span>₹${sgst.toFixed(2)}</span></div>
-            <div class="line"><b>Total</b><b>₹${total.toFixed(2)}</b></div>
-          </div>
+    ${selectHTML}<br>
 
-          <select id="pay-${tableNo}">
-            <option>Cash</option>
-            <option>UPI</option>
-          </select><br>
-
-          <button onclick="window.print()">Print Invoice</button>
-          <button onclick="closeTable('${tableNo}', ${total})">Close Bill</button>
-        </div>`;
-      });
-    });
-}
+    <button onclick="window.print()">Print Invoice</button>
+    <button onclick="closeTable('${tableNo}', ${total})">Close Bill</button>
+  </div>
+`;
 
 function closeTable(tableNo, total) {
-  const mode = document.getElementById(`pay-${tableNo}`).value;
+  const mode = paymentSelection[tableNo] || "Cash";
 
   fetch("/close-table", {
     method: "POST",
@@ -142,9 +136,16 @@ function closeTable(tableNo, total) {
       payment_mode: mode
     })
   })
-  .then(() => loadOrders());
+  .then(() => {
+    delete paymentSelection[tableNo]; // cleanup
+    loadOrders();
+  });
 }
 
+function savePayment(tableNo) {
+  const value = document.getElementById(`pay-${tableNo}`).value;
+  paymentSelection[tableNo] = value;
+}
 
 function exportExcel(){ window.open("/export"); }
 
@@ -158,5 +159,6 @@ function loadMonthly(){
 showCart();
 loadOrders();
 setInterval(loadOrders,3000);
+
 
 
