@@ -18,12 +18,12 @@ if (params.get("table")) {
 const table = localStorage.getItem("table") || "Unknown";
 
 /*************************************************
- * CART STORAGE
+ * CART STORAGE (SINGLE SOURCE)
  *************************************************/
 let cart = JSON.parse(localStorage.getItem("cart")) || [];
 
 /*************************************************
- * CART COUNT BADGE
+ * CART BADGE
  *************************************************/
 function updateCartCount() {
   const badge = document.getElementById("cart-count");
@@ -34,27 +34,29 @@ function updateCartCount() {
 }
 
 /*************************************************
- * QUANTITY CONTROL (MENU UI ONLY)
+ * MENU QTY UI ONLY
  *************************************************/
 function changeQty(btn, delta) {
   const qtySpan = btn.parentElement.querySelector(".qty-value");
-  if (!qtySpan) return;
-
   let qty = parseInt(qtySpan.innerText) + delta;
   if (qty < 1) qty = 1;
   qtySpan.innerText = qty;
 }
 
 /*************************************************
- * ADD TO CART (FROM MENU)
+ * ADD TO CART (MENU PAGE)
  *************************************************/
 function addToCartFromUI(btn, name, price) {
-  const itemBox = btn.closest(".menu-item");
-  const qtySpan = itemBox.querySelector(".qty-value");
+  if (isNaN(price)) price = 0;
+
+  const card = btn.closest(".menu-item");
+  const qtySpan = card.querySelector(".qty-value");
   const qty = parseInt(qtySpan.innerText);
 
-  const existing = cart.find(i => i.name === name);
+  btn.style.display = "none";
+  card.querySelector(".qty-control").style.display = "flex";
 
+  const existing = cart.find(i => i.name === name);
   if (existing) {
     existing.qty += qty;
   } else {
@@ -110,10 +112,7 @@ function placeOrder() {
   fetch("/order", {
     method: "POST",
     headers: { "Content-Type": "application/json" },
-    body: JSON.stringify({
-      table,
-      items: cart
-    })
+    body: JSON.stringify({ table, items: cart })
   })
     .then(() => {
       localStorage.removeItem("cart");
@@ -126,7 +125,7 @@ function placeOrder() {
 }
 
 /*************************************************
- * ADMIN: LOAD LIVE ORDERS (admin.html)
+ * ADMIN: LOAD ORDERS
  *************************************************/
 function loadOrders() {
   fetch("/orders")
@@ -144,7 +143,6 @@ function loadOrders() {
 
       rows.forEach(order => {
         const items = JSON.parse(order.items);
-
         let html = `<div style="border:1px solid #000;padding:10px;margin-bottom:10px;">
           <h3>Table ${order.table_no}</h3>`;
 
