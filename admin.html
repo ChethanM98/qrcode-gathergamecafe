@@ -4,11 +4,7 @@
 <title>Kitchen & Billing</title>
 
 <style>
-body {
-  font-family: Arial;
-  background:#f2f2f2;
-  padding:20px;
-}
+body { font-family: Arial; background:#f2f2f2; padding:20px; }
 
 .order-box {
   background:#fff;
@@ -19,30 +15,10 @@ body {
   page-break-inside: avoid;
 }
 
-.table-title {
-  font-size:18px;
-  font-weight:bold;
-  margin-bottom:8px;
-}
-
-.items {
-  border-top:1px solid #ccc;
-  border-bottom:1px solid #ccc;
-  padding:10px 0;
-}
-
-.item-row {
-  display:flex;
-  justify-content:space-between;
-  margin:6px 0;
-}
-
-.total {
-  text-align:right;
-  font-weight:bold;
-  margin-top:10px;
-  line-height:1.6;
-}
+.table-title { font-size:18px; font-weight:bold; }
+.items { border-top:1px solid #ccc; border-bottom:1px solid #ccc; padding:10px 0; }
+.item-row { display:flex; justify-content:space-between; margin:6px 0; }
+.total { text-align:right; font-weight:bold; margin-top:10px; line-height:1.6; }
 
 .actions {
   display:flex;
@@ -51,47 +27,21 @@ body {
   margin-top:12px;
 }
 
-select, button {
-  padding:8px 12px;
-  font-size:14px;
-}
+select, button { padding:8px 12px; font-size:14px; }
 
-.print-btn {
-  background:#7b4b2a;
-  color:#fff;
-  border:none;
-  cursor:pointer;
-}
+.print-btn { background:#7b4b2a; color:#fff; border:none; }
+.close-btn { background:#3fa55b; color:#fff; border:none; }
 
-.close-btn {
-  background:#3fa55b;
-  color:#fff;
-  border:none;
-  cursor:pointer;
-}
-
-/* ===== PRINT FIX ===== */
 @media print {
-  body * {
-    visibility: hidden;
-  }
-
-  .print-area, .print-area * {
-    visibility: visible;
-  }
-
+  body * { visibility:hidden; }
+  .print-area, .print-area * { visibility:visible; }
   .print-area {
-    position: absolute;
-    left: 0;
-    top: 0;
-    width: 80mm;     /* thermal printer safe */
-    padding: 10px;
-    font-size: 12px;
+    position:absolute;
+    left:0; top:0;
+    width:80mm;
+    font-size:12px;
   }
-
-  button, select {
-    display: none;
-  }
+  button, select { display:none; }
 }
 </style>
 </head>
@@ -99,12 +49,10 @@ select, button {
 <body>
 
 <h1>🍽️ Kitchen & Billing</h1>
-
 <div id="orders"></div>
 
 <hr>
 
-<!-- ✅ SINGLE REPORT SECTION -->
 <h2>📊 Reports</h2>
 <button onclick="exportDailySummaryExcel()">📅 Day-wise Excel</button>
 <button onclick="exportMonthlyExcel()">📆 Monthly Excel</button>
@@ -115,45 +63,44 @@ select, button {
 document.addEventListener("DOMContentLoaded", function () {
 
   const KITCHEN_KEY = "kitchen_orders";
+  const CLOSED_KEY = "closed_bills";
   const ordersDiv = document.getElementById("orders");
+  const reportDiv = document.getElementById("report");
 
   loadOrders();
-
-  /* ===== AUTO REFRESH EVERY 10 SECONDS ===== */
   setInterval(loadOrders, 10000);
 
+  /* ================= OPEN ORDERS ================= */
   function loadOrders() {
     const orders = JSON.parse(localStorage.getItem(KITCHEN_KEY)) || [];
     ordersDiv.innerHTML = "";
 
-    const openOrders = orders.filter(o => o.status === "Open");
-
-    if (openOrders.length === 0) {
+    if (orders.length === 0) {
       ordersDiv.innerHTML = "<p>No open orders</p>";
       return;
     }
 
-    openOrders.forEach(order => {
+    orders.forEach(order => {
 
       let itemsHTML = "";
       let subTotal = 0;
 
-      for (const key in order.items) {
-        const item = order.items[key];
-        const lineTotal = item.price * item.qty;
-        subTotal += lineTotal;
+      for (const k in order.items) {
+        const it = order.items[k];
+        const line = it.price * it.qty;
+        subTotal += line;
 
         itemsHTML += `
           <div class="item-row">
-            <span>${item.name} × ${item.qty}</span>
-            <span>₹${lineTotal.toFixed(2)}</span>
+            <span>${it.name} × ${it.qty}</span>
+            <span>₹${line.toFixed(2)}</span>
           </div>
         `;
       }
 
       const cgst = subTotal * 0.025;
       const sgst = subTotal * 0.025;
-      const grandTotal = subTotal + cgst + sgst;
+      const grand = subTotal + cgst + sgst;
 
       ordersDiv.innerHTML += `
         <div class="order-box print-area">
@@ -163,9 +110,9 @@ document.addEventListener("DOMContentLoaded", function () {
             ${itemsHTML}
             <div class="total">
               Subtotal: ₹${subTotal.toFixed(2)}<br>
-              CGST (2.5%): ₹${cgst.toFixed(2)}<br>
-              SGST (2.5%): ₹${sgst.toFixed(2)}<br>
-              <strong>Grand Total: ₹${grandTotal.toFixed(2)}</strong>
+              CGST: ₹${cgst.toFixed(2)}<br>
+              SGST: ₹${sgst.toFixed(2)}<br>
+              <strong>Grand Total: ₹${grand.toFixed(2)}</strong>
             </div>
           </div>
 
@@ -180,8 +127,9 @@ document.addEventListener("DOMContentLoaded", function () {
             </div>
 
             <div>
-              <button class="print-btn" onclick="printThis(this)">Print Bill</button>
-              <button class="close-btn" onclick="closeBill('${order.table}')">
+              <button class="print-btn" onclick="printThis(this)">Print</button>
+              <button class="close-btn"
+                onclick="closeBill('${order.table}', ${subTotal}, ${cgst}, ${sgst}, ${grand})">
                 Close Bill
               </button>
             </div>
@@ -191,45 +139,122 @@ document.addEventListener("DOMContentLoaded", function () {
     });
   }
 
-  /* ===== PAYMENT ===== */
   window.setPayment = function (table, method) {
     const orders = JSON.parse(localStorage.getItem(KITCHEN_KEY)) || [];
-    const order = orders.find(o => o.table === table && o.status === "Open");
-    if (order) {
-      order.payment = method;
+    const o = orders.find(x => x.table === table);
+    if (o) {
+      o.payment = method;
       localStorage.setItem(KITCHEN_KEY, JSON.stringify(orders));
     }
   };
 
-  /* ===== CLOSE BILL ===== */
-  window.closeBill = function (table) {
-    const orders = JSON.parse(localStorage.getItem(KITCHEN_KEY)) || [];
-    const index = orders.findIndex(o => o.table === table && o.status === "Open");
+  /* ================= CLOSE BILL ================= */
+  window.closeBill = function (table, sub, cgst, sgst, grand) {
 
-    if (index === -1) return;
+    let orders = JSON.parse(localStorage.getItem(KITCHEN_KEY)) || [];
+    let closed = JSON.parse(localStorage.getItem(CLOSED_KEY)) || [];
 
-    if (!orders[index].payment) {
-      alert("Please select payment method before closing bill");
+    const idx = orders.findIndex(o => o.table === table);
+    if (idx === -1) return;
+
+    if (!orders[idx].payment) {
+      alert("Select payment method");
       return;
     }
 
-    orders.splice(index, 1);
+    const now = new Date();
+    const date = now.toISOString().slice(0,10);
+    const month = now.toISOString().slice(0,7);
+
+    closed.push({
+      table,
+      items: orders[idx].items,
+      subTotal: sub,
+      cgst,
+      sgst,
+      grandTotal: grand,
+      payment: orders[idx].payment,
+      date,
+      month
+    });
+
+    orders.splice(idx, 1);
+
     localStorage.setItem(KITCHEN_KEY, JSON.stringify(orders));
+    localStorage.setItem(CLOSED_KEY, JSON.stringify(closed));
+
     loadOrders();
   };
 
-  /* ===== PRINT ONLY THIS ORDER ===== */
+  /* ================= REPORTS ================= */
+
+  function downloadCSV(filename, rows) {
+    const csv = rows.map(r => r.join(",")).join("\n");
+    const blob = new Blob([csv], { type: "text/csv" });
+    const a = document.createElement("a");
+    a.href = URL.createObjectURL(blob);
+    a.download = filename;
+    a.click();
+  }
+
+  window.exportDailySummaryExcel = function () {
+    const bills = JSON.parse(localStorage.getItem(CLOSED_KEY)) || {};
+    const map = {};
+
+    bills.forEach(b => {
+      if (!map[b.date]) map[b.date] = { cash:0, upi:0, total:0 };
+      map[b.date][b.payment.toLowerCase()] += b.grandTotal;
+      map[b.date].total += b.grandTotal;
+    });
+
+    const rows = [["Date","Cash","UPI","Total"]];
+    for (const d in map) {
+      rows.push([d, map[d].cash, map[d].upi, map[d].total]);
+    }
+
+    downloadCSV("daily_report.csv", rows);
+  };
+
+  window.exportMonthlyExcel = function () {
+    const bills = JSON.parse(localStorage.getItem(CLOSED_KEY)) || {};
+    const map = {};
+
+    bills.forEach(b => {
+      if (!map[b.month]) map[b.month] = { cash:0, upi:0, total:0 };
+      map[b.month][b.payment.toLowerCase()] += b.grandTotal;
+      map[b.month].total += b.grandTotal;
+    });
+
+    const rows = [["Month","Cash","UPI","Total"]];
+    for (const m in map) {
+      rows.push([m, map[m].cash, map[m].upi, map[m].total]);
+    }
+
+    downloadCSV("monthly_report.csv", rows);
+  };
+
+  window.loadMonthly = function () {
+    const bills = JSON.parse(localStorage.getItem(CLOSED_KEY)) || [];
+    const map = {};
+
+    bills.forEach(b => {
+      if (!map[b.month]) map[b.month] = 0;
+      map[b.month] += b.grandTotal;
+    });
+
+    reportDiv.innerHTML = "<h3>Monthly Summary</h3>";
+    for (const m in map) {
+      reportDiv.innerHTML += `<p>${m} : ₹${map[m].toFixed(2)}</p>`;
+    }
+  };
+
   window.printThis = function (btn) {
     const box = btn.closest(".order-box");
     document.querySelectorAll(".order-box").forEach(b => {
       if (b !== box) b.style.display = "none";
     });
-
     window.print();
-
-    document.querySelectorAll(".order-box").forEach(b => {
-      b.style.display = "";
-    });
+    document.querySelectorAll(".order-box").forEach(b => b.style.display = "");
   };
 
 });
