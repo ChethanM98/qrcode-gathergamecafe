@@ -68,10 +68,11 @@ document.addEventListener("DOMContentLoaded", function () {
   const cartList = document.getElementById("cart-list");
   const cartCountEl = document.getElementById("cart-count");
 
-  let cart = {};
+  // STEP 4: Load cart from localStorage
+  let cart = JSON.parse(localStorage.getItem("cart")) || {};
 
   menu.innerHTML = menuData.map(item => `
-    <div class="menu-item">
+    <div class="menu-item" data-name="${item.name}">
       <div>
         <strong>${item.name}</strong><br>
         ₹${item.price}
@@ -92,6 +93,10 @@ document.addEventListener("DOMContentLoaded", function () {
     </div>
   `).join("");
 
+  function saveCart() {
+    localStorage.setItem("cart", JSON.stringify(cart));
+  }
+
   function updateCartCount() {
     let total = 0;
     for (const item in cart) {
@@ -109,11 +114,30 @@ document.addEventListener("DOMContentLoaded", function () {
     }
   }
 
+  function restoreUIFromCart() {
+    for (const name in cart) {
+      const card = document.querySelector(`.menu-item[data-name="${name}"]`);
+      if (!card) continue;
+
+      const addBtn = card.querySelector(".add-btn");
+      const qtyControl = card.querySelector(".qty-control");
+      const qtySpan = card.querySelector(".qty-value");
+
+      addBtn.style.display = "none";
+      qtyControl.style.display = "flex";
+      qtySpan.innerText = cart[name].qty;
+    }
+
+    updateCartCount();
+    renderCartDebug();
+  }
+
   window.showQty = function (btn, name, price) {
     btn.style.display = "none";
     btn.parentElement.querySelector(".qty-control").style.display = "flex";
 
     cart[name] = { price, qty: 1 };
+    saveCart();
     updateCartCount();
     renderCartDebug();
   };
@@ -132,15 +156,20 @@ document.addEventListener("DOMContentLoaded", function () {
       cart[name].qty = qty;
     }
 
+    saveCart();
     updateCartCount();
     renderCartDebug();
   };
 
+  // 🔁 Restore cart on page load
+  restoreUIFromCart();
+
 });
 </script>
- 
+
 </body>
 </html>
+
 
 
 
