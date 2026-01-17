@@ -1,5 +1,3 @@
-// ===== TEMP PAYMENT MODE STORE (ADMIN) =====
-const paymentSelection = {};
 
 // ===== ADMIN SECURITY =====
 if (location.pathname.includes("admin.html") &&
@@ -61,90 +59,64 @@ function placeOrder() {
 
 // ===== ADMIN LOAD (TABLE-WISE) =====
 function loadOrders() {
-  fetch("/orders")
-    .then(res => res.json())
-    .then(rows => {
-      const div = document.getElementById("orders");
-      if (!div) return;
+  fetch("/orders").then(r=>r.json()).then(data=>{
+    const div = document.getElementById("orders");
+    if (!div) return;
+    div.innerHTML = "";
 
-      div.innerHTML = "";
-
-      // ===== GROUP BY TABLE =====
-      const tableMap = {};
-
-      rows.forEach(row => {
-        const table = row.table_no;
-        const items = JSON.parse(row.items);
-
-        if (!tableMap[table]) tableMap[table] = [];
-        tableMap[table].push(...items);
+    data.forEach(row=>{
+      const merged = {};
+      JSON.parse(row.items).forEach(i=>{
+        if (!merged[i.name]) merged[i.name] = {...i};
+        else merged[i.name].qty += i.qty;
       });
 
-      // ===== RENDER EACH TABLE =====
-      Object.keys(tableMap).forEach(tableNo => {
-        const merged = {};
-        let subtotal = 0;
+      let subtotal = 0;
+      const lines = Object.values(merged).map(i=>{
+        const t = i.price * i.qty;
+        subtotal += t;
+        return `${i.name} x${i.qty} – ₹${t}`;
+      }).join("<br>");
 
-        tableMap[tableNo].forEach(item => {
-          if (!merged[item.name]) {
-            merged[item.name] = { ...item };
-          } else {
-            merged[item.name].qty += item.qty;
-          }
-        });
+      const cgst = subtotal * CGST/100;
+      const sgst = subtotal * SGST/100;
+      const total = subtotal + cgst + sgst;
 
-        const lines = Object.values(merged).map(i => {
-          const lineTotal = i.price * i.qty;
-          subtotal += lineTotal;
-          return `${i.name} x${i.qty} – ₹${lineTotal}`;
-        }).join("<br>");
+      div.innerHTML += `
+      <div class="table-box">
+        <div class="invoice">
+          <h3>Gather Game Café</h3>
+          GSTIN: 29ABCDE1234F1Z5<br>
+          Invoice: INV-${row.table_no}<br>
+          Date: ${new Date().toLocaleDateString("en-IN")}<br>
+          Table: ${row.table_no}<br><br>
+          ${lines}
+          <hr>
+          <div class="line"><span>Subtotal</span><span>₹${subtotal}</span></div>
+          <div class="line"><span>CGST 2.5%</span><span>₹${cgst}</span></div>
+          <div class="line"><span>SGST 2.5%</span><span>₹${sgst}</span></div>
+          <div class="line"><b>Total</b><b>₹${total}</b></div>
+        </div>
 
-        const cgst = subtotal * 0.025;
-        const sgst = subtotal * 0.025;
-        const total = subtotal + cgst + sgst;
-const selectedMode = paymentSelection[tableNo] || "Cash";
+        <select id="pay-${row.table_no}">
+          <option>Cash</option>
+          <option>UPI</option>
+        </select><br>
 
-const selectHTML = `
-<select id="pay-${tableNo}" onchange="savePayment('${tableNo}')">
-  <option value="Cash" ${selectedMode === "Cash" ? "selected" : ""}>Cash</option>
-  <option value="UPI" ${selectedMode === "UPI" ? "selected" : ""}>UPI</option>
-</select>
-`;
-
-div.innerHTML += `
-  <div class="table-box">
-    <div class="invoice">
-      ...
-    </div>
-
-    ${selectHTML}<br>
-
-    <button onclick="window.print()">Print Invoice</button>
-    <button onclick="closeTable('${tableNo}', ${total})">Close Bill</button>
-  </div>
-`;
-
-function closeTable(tableNo, total) {
-  const mode = paymentSelection[tableNo] || "Cash";
-
-  fetch("/close-table", {
-    method: "POST",
-    headers: { "Content-Type": "application/json" },
-    body: JSON.stringify({
-      table: tableNo,
-      total,
-      payment_mode: mode
-    })
-  })
-  .then(() => {
-    delete paymentSelection[tableNo]; // cleanup
-    loadOrders();
+        <button onclick="window.print()">Print Invoice</button>
+        <button onclick="closeTable('${row.table_no}',${total})">Close Bill</button>
+      </div>`;
+    });
   });
 }
 
-function savePayment(tableNo) {
-  const value = document.getElementById(`pay-${tableNo}`).value;
-  paymentSelection[tableNo] = value;
+function closeTable(tableNo,total) {
+  const mode = document.getElementById(`pay-${tableNo}`).value;
+  fetch("/close-table",{
+    method:"POST",
+    headers:{ "Content-Type":"application/json" },
+    body:JSON.stringify({ table:tableNo, total, payment_mode:mode })
+  }).then(()=>loadOrders());
 }
 
 function exportExcel(){ window.open("/export"); }
@@ -159,6 +131,3 @@ function loadMonthly(){
 showCart();
 loadOrders();
 setInterval(loadOrders,3000);
-
-
-
