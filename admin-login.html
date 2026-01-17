@@ -2,15 +2,15 @@
 <html>
 <body>
 
-<h2>Admin Login</h2>
+<h2>Owner Login</h2>
 <input type="password" id="pin" placeholder="Enter PIN">
 <button onclick="login()">Login</button>
 
 <script>
 function login() {
-  if (document.getElementById("pin").value === "9663") {
+  if (document.getElementById("pin").value === "14022398") {
     sessionStorage.setItem("admin","yes");
-    location.href = "admin.html";
+    location.href = "reports.html";
   } else {
     alert("Wrong PIN");
   }
