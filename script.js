@@ -1,4 +1,6 @@
-// ===== ADMIN SECURITY =====
+/*************************************************
+ * ADMIN SECURITY (admin.html only)
+ *************************************************/
 if (
   location.pathname.includes("admin.html") &&
   sessionStorage.getItem("admin") !== "yes"
@@ -6,47 +8,55 @@ if (
   location.href = "admin-login.html";
 }
 
-// ===== TAX =====
-const CGST = 2.5;
-const SGST = 2.5;
-
-// ===== PAYMENT MEMORY =====
-const paymentSelection = {};
-
-// ===== TABLE =====
+/*************************************************
+ * TABLE HANDLING
+ *************************************************/
 const params = new URLSearchParams(location.search);
-if (params.get("table")) localStorage.setItem("table", params.get("table"));
+if (params.get("table")) {
+  localStorage.setItem("table", params.get("table"));
+}
 const table = localStorage.getItem("table") || "Unknown";
 
-// ===== CART =====
+/*************************************************
+ * CART STORAGE
+ *************************************************/
 let cart = JSON.parse(localStorage.getItem("cart")) || [];
 
-// ===== CART COUNT =====
+/*************************************************
+ * CART COUNT BADGE
+ *************************************************/
 function updateCartCount() {
-  const countEl = document.getElementById("cart-count");
-  if (!countEl) return;
+  const badge = document.getElementById("cart-count");
+  if (!badge) return;
 
   const totalQty = cart.reduce((sum, item) => sum + item.qty, 0);
-  countEl.innerText = totalQty;
+  badge.innerText = totalQty;
 }
 
-// ===== QUANTITY (UI ONLY) =====
+/*************************************************
+ * QUANTITY CONTROL (MENU UI ONLY)
+ *************************************************/
 function changeQty(btn, delta) {
-  const span = btn.parentElement.querySelector(".qty-value");
-  let qty = parseInt(span.innerText) + delta;
+  const qtySpan = btn.parentElement.querySelector(".qty-value");
+  if (!qtySpan) return;
+
+  let qty = parseInt(qtySpan.innerText) + delta;
   if (qty < 1) qty = 1;
-  span.innerText = qty;
+  qtySpan.innerText = qty;
 }
 
-// ===== ADD TO CART =====
+/*************************************************
+ * ADD TO CART (FROM MENU)
+ *************************************************/
 function addToCartFromUI(btn, name, price) {
-  const qty = parseInt(
-    btn.closest(".menu-item").querySelector(".qty-value").innerText
-  );
+  const itemBox = btn.closest(".menu-item");
+  const qtySpan = itemBox.querySelector(".qty-value");
+  const qty = parseInt(qtySpan.innerText);
 
-  const found = cart.find(i => i.name === name);
-  if (found) {
-    found.qty += qty;
+  const existing = cart.find(i => i.name === name);
+
+  if (existing) {
+    existing.qty += qty;
   } else {
     cart.push({ name, price, qty });
   }
@@ -55,157 +65,104 @@ function addToCartFromUI(btn, name, price) {
   updateCartCount();
 }
 
-// ===== SHOW CART (cart.html) =====
+/*************************************************
+ * SHOW CART (cart.html)
+ *************************************************/
 function showCart() {
-  const div = document.getElementById("cartItems");
-  if (!div) return;
+  const container = document.getElementById("cartItems");
+  if (!container) return;
 
-  div.innerHTML = "";
+  container.innerHTML = "";
   let total = 0;
+
+  if (cart.length === 0) {
+    container.innerHTML = "<p>Your cart is empty.</p>";
+    return;
+  }
 
   cart.forEach(item => {
     const lineTotal = item.price * item.qty;
     total += lineTotal;
 
-    div.innerHTML += `
+    container.innerHTML += `
       <p>
-        ${item.name} x${item.qty}
-        — ₹${lineTotal.toFixed(2)}
+        <span>${item.name} × ${item.qty}</span>
+        <span>₹${lineTotal.toFixed(2)}</span>
       </p>
     `;
   });
 
-  div.innerHTML += `
+  container.innerHTML += `
     <hr>
     <h3>Total: ₹${total.toFixed(2)}</h3>
   `;
-
-  updateCartCount();
 }
 
-// ===== PLACE ORDER =====
+/*************************************************
+ * PLACE ORDER
+ *************************************************/
 function placeOrder() {
+  if (cart.length === 0) {
+    alert("Cart is empty");
+    return;
+  }
+
   fetch("/order", {
     method: "POST",
     headers: { "Content-Type": "application/json" },
-    body: JSON.stringify({ table, items: cart })
-  }).then(() => {
-    localStorage.removeItem("cart");
-    cart = [];
-    updateCartCount();
-    alert("Order placed successfully");
-    location.href = "index.html?table=" + table;
-  });
+    body: JSON.stringify({
+      table,
+      items: cart
+    })
+  })
+    .then(() => {
+      localStorage.removeItem("cart");
+      cart = [];
+      updateCartCount();
+      alert("Order placed successfully!");
+      location.href = "index.html?table=" + table;
+    })
+    .catch(() => alert("Server error. Try again."));
 }
 
-// ===== ADMIN LOAD ORDERS (TABLE-WISE) =====
+/*************************************************
+ * ADMIN: LOAD LIVE ORDERS (admin.html)
+ *************************************************/
 function loadOrders() {
   fetch("/orders")
-    .then(r => r.json())
+    .then(res => res.json())
     .then(rows => {
-      const div = document.getElementById("orders");
-      if (!div) return;
+      const container = document.getElementById("orders");
+      if (!container) return;
 
-      div.innerHTML = "";
-      const tableMap = {};
+      container.innerHTML = "";
 
-      rows.forEach(r => {
-        if (!tableMap[r.table_no]) tableMap[r.table_no] = [];
-        tableMap[r.table_no].push(...JSON.parse(r.items));
-      });
+      if (!rows.length) {
+        container.innerHTML = "<p>No active orders</p>";
+        return;
+      }
 
-      Object.keys(tableMap).forEach(tableNo => {
-        const merged = {};
-        let subtotal = 0;
+      rows.forEach(order => {
+        const items = JSON.parse(order.items);
 
-        tableMap[tableNo].forEach(i => {
-          if (!merged[i.name]) merged[i.name] = { ...i };
-          else merged[i.name].qty += i.qty;
+        let html = `<div style="border:1px solid #000;padding:10px;margin-bottom:10px;">
+          <h3>Table ${order.table_no}</h3>`;
+
+        items.forEach(i => {
+          html += `<p>${i.name} × ${i.qty}</p>`;
         });
 
-        const lines = Object.values(merged)
-          .map(i => {
-            const t = i.price * i.qty;
-            subtotal += t;
-            return `${i.name} x${i.qty} – ₹${t}`;
-          })
-          .join("<br>");
-
-        const cgst = subtotal * 0.025;
-        const sgst = subtotal * 0.025;
-        const total = subtotal + cgst + sgst;
-
-        const selectedMode = paymentSelection[tableNo] || "Cash";
-
-        const selectHTML = `
-          <select id="pay-${tableNo}" onchange="savePayment('${tableNo}')">
-            <option value="Cash" ${selectedMode === "Cash" ? "selected" : ""}>Cash</option>
-            <option value="UPI" ${selectedMode === "UPI" ? "selected" : ""}>UPI</option>
-          </select>
-        `;
-
-        div.innerHTML += `
-          <div class="table-box">
-            <div class="invoice">
-              <h3>Gather Game Café</h3>
-              GSTIN: 29ABCDE1234F1Z5<br>
-              Invoice: INV-${tableNo}<br>
-              Date: ${new Date().toLocaleDateString("en-IN")}<br>
-              Table: ${tableNo}<br><br>
-              ${lines}
-              <hr>
-              <div class="line"><span>Subtotal</span><span>₹${subtotal.toFixed(2)}</span></div>
-              <div class="line"><span>CGST 2.5%</span><span>₹${cgst.toFixed(2)}</span></div>
-              <div class="line"><span>SGST 2.5%</span><span>₹${sgst.toFixed(2)}</span></div>
-              <div class="line"><b>Total</b><b>₹${total.toFixed(2)}</b></div>
-            </div>
-
-            ${selectHTML}<br>
-            <button onclick="window.print()">Print Invoice</button>
-            <button onclick="closeTable('${tableNo}', ${total})">Close Bill</button>
-          </div>
-        `;
+        html += `</div>`;
+        container.innerHTML += html;
       });
     });
 }
 
-function savePayment(tableNo) {
-  paymentSelection[tableNo] =
-    document.getElementById(`pay-${tableNo}`).value;
-}
-
-function closeTable(tableNo, total) {
-  const mode = paymentSelection[tableNo] || "Cash";
-  fetch("/close-table", {
-    method: "POST",
-    headers: { "Content-Type": "application/json" },
-    body: JSON.stringify({ table: tableNo, total, payment_mode: mode })
-  }).then(() => {
-    delete paymentSelection[tableNo];
-    loadOrders();
-  });
-}
-
-// ===== REPORTS =====
-function exportDailySummaryExcel() {
-  window.open("/export-daily-summary");
-}
-
-function exportMonthlyExcel() {
-  window.open("/export-monthly");
-}
-
-function loadMonthly() {
-  fetch("/monthly")
-    .then(r => r.json())
-    .then(d => {
-      document.getElementById("report").innerHTML =
-        d.map(m => `${m.month}: ₹${m.total}`).join("<br>");
-    });
-}
-
-// ===== INIT =====
-showCart();
-updateCartCount();
-loadOrders();
-setInterval(loadOrders, 10000);
+/*************************************************
+ * AUTO INIT
+ *************************************************/
+document.addEventListener("DOMContentLoaded", () => {
+  updateCartCount();
+  showCart();
+  loadOrders();
+});
