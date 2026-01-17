@@ -6,130 +6,61 @@
 <title>Gather & Game Café – Menu</title>
 
 <style>
-/* ---------- BOARD GAME BACKGROUND ---------- */
 body {
   font-family: Arial, sans-serif;
   padding: 20px;
   margin: 0;
   color: #2e1d12;
-
-  background:
-    radial-gradient(circle at 20% 30%, rgba(123,75,42,0.12) 2px, transparent 3px),
-    radial-gradient(circle at 70% 60%, rgba(63,165,91,0.12) 2px, transparent 3px),
-    radial-gradient(circle at 40% 80%, rgba(0,0,0,0.08) 2px, transparent 3px),
-    linear-gradient(135deg, #f6f1e7, #e7dbc8);
-
-  background-size:
-    120px 120px,
-    160px 160px,
-    200px 200px,
-    cover;
-
-  background-attachment: fixed;
+  background: linear-gradient(135deg, #f6f1e7, #e7dbc8);
 }
 
-/* ---------- HEADER ---------- */
-h1 {
-  text-align: center;
-  margin-bottom: 20px;
-  letter-spacing: 1px;
-}
-
-/* ---------- TABS ---------- */
-.tabs {
-  display: flex;
-  gap: 10px;
-  justify-content: center;
-  overflow-x: auto;
-  margin-bottom: 20px;
-}
-
-.tab-btn {
-  padding: 10px 16px;
-  background: #f6f1e7;
-  border: 2px solid #7b4b2a;
-  cursor: pointer;
-  border-radius: 999px;
-  font-weight: bold;
-  white-space: nowrap;
-}
-
-.tab-btn.active {
-  background: #7b4b2a;
+/* CART BUTTON */
+.cart-btn {
+  position: fixed;
+  bottom: 20px;
+  right: 20px;
+  background: #3fa55b;
   color: #fff;
+  text-decoration: none;
+  padding: 14px 22px;
+  border-radius: 999px;
+  font-size: 16px;
+  font-weight: bold;
+  box-shadow: 0 6px 16px rgba(0,0,0,0.25);
+  z-index: 999;
 }
 
-/* ---------- MENU ---------- */
-.menu-container {
-  max-width: 1000px;
-  margin: auto;
+.cart-count {
+  background: #fff;
+  color: #3fa55b;
+  margin-left: 8px;
+  padding: 2px 8px;
+  border-radius: 999px;
+  font-size: 14px;
+  font-weight: bold;
 }
 
-.tab-content {
-  display: none;
-}
-
-.tab-content.active {
-  display: block;
-}
-
-/* ---------- MENU ITEM ---------- */
+/* MENU */
 .menu-item {
   display: flex;
   justify-content: space-between;
   align-items: center;
-  background: rgba(255,255,255,0.95);
+  background: #fff;
+  padding: 14px;
+  margin-bottom: 12px;
   border-radius: 10px;
-  padding: 15px;
-  margin-bottom: 14px;
   box-shadow: 0 4px 12px rgba(0,0,0,0.12);
 }
 
-.menu-item h3 {
-  margin: 0;
-}
-
-.desc {
-  font-size: 14px;
-  color: #5f4a3a;
-  margin: 4px 0;
-}
-
-.price {
-  font-weight: bold;
-}
-
-/* ---------- ACTIONS ---------- */
-.actions {
-  display: flex;
-  align-items: center;
-}
-
-/* Add button */
-.add-btn {
-  background: #3fa55b;
-  border: none;
-  padding: 10px 18px;
-  color: white;
-  font-size: 14px;
-  cursor: pointer;
-  border-radius: 999px;
-}
-
-/* Qty controls */
 .qty-control {
-  display: none;
-  align-items: center;
+  display: flex;
   gap: 10px;
-  background: #fff;
-  border-radius: 999px;
-  padding: 6px 12px;
-  box-shadow: 0 3px 10px rgba(0,0,0,0.2);
+  align-items: center;
 }
 
 .qty-control button {
-  width: 28px;
-  height: 28px;
+  width: 30px;
+  height: 30px;
   border-radius: 50%;
   border: none;
   background: #7b4b2a;
@@ -138,241 +69,40 @@ h1 {
   cursor: pointer;
 }
 
-.qty-value {
-  font-weight: bold;
-  min-width: 18px;
-  text-align: center;
-}
-/* ---------- GO TO CART BUTTON ---------- */
-.cart-btn {
-  position: fixed;
-  bottom: 20px;
-  right: 20px;
-
+.add-btn {
   background: #3fa55b;
-  color: #ffffff;
-  text-decoration: none;
-
-  padding: 14px 22px;
-  border-radius: 999px; /* curved rectangle */
-  font-size: 16px;
-  font-weight: bold;
-
-  box-shadow: 0 6px 16px rgba(0,0,0,0.25);
-  transition: transform 0.2s ease, background 0.2s ease;
-  z-index: 999;
-}
-
-.cart-btn:hover {
-  background: #2f8c4c;
-  transform: translateY(-2px);
-}
-.cart-count {
-  background: #ffffff;
-  color: #3fa55b;
-  margin-left: 8px;
-  padding: 2px 8px;
+  color: white;
+  border: none;
+  padding: 10px 18px;
   border-radius: 999px;
-  font-size: 14px;
-  font-weight: bold;
+  cursor: pointer;
 }
 </style>
 </head>
-<a href="cart.html" class="cart-btn">
-  🛒 Go to Cart
-  <span id="cart-count" class="cart-count">0</span>
-</a>
+
 <body>
+
+<!-- ✅ FIXED: CART BUTTON INSIDE BODY -->
+<a href="cart.html" class="cart-btn">
+  🛒 Go to Cart <span id="cart-count" class="cart-count">0</span>
+</a>
 
 <h1>🎲 Gather & Game Café Menu</h1>
 
-<div class="tabs" id="tabs"></div>
-<div id="menu" class="menu-container"></div>
+<div class="menu-item">
+  <div>
+    <h3>Masala Omelette</h3>
+    <p>Spicy Indian omelette</p>
+    <b>₹89</b>
+  </div>
+  <div class="qty-control">
+    <button onclick="changeQty(this,-1)">−</button>
+    <span class="qty-value">1</span>
+    <button onclick="changeQty(this,1)">+</button>
+    <button class="add-btn" onclick="addToCartFromUI(this,'Masala Omelette',89)">Add</button>
+  </div>
+</div>
 
-<script>
-const menuData = {
-  "🍳 Eggs & Breads": [
-   { name: "Fried Eggs (2 eggs)", price: 49, desc: "Sunny-side up eggs cooked fresh." },
-{ name: "Boiled Eggs (2 eggs)", price: 49, desc: "Perfectly boiled eggs with light seasoning." },
-{ name: "Masala Omelette", price: 89, desc: "Omelette with onions, tomatoes, and Indian spices." },
-{ name: "Cheese Omelette", price: 99, desc: "Fluffy omelette filled with melted cheese." },
-{ name: "Egg Bhurji", price: 99, desc: "Scrambled eggs cooked desi-style." },
-{ name: "Mushroom Cheese Omelette", price: 109, desc: "Omelette with sautéed mushrooms and cheese." },
-{ name: "Vegetable Masala Omelette", price: 109, desc: "Egg omelette loaded with fresh vegetables." },
-{ name: "Chicken Omelette", price: 119, desc: "Protein-packed omelette with chicken chunks." },
-{ name: "Anda Bhurji Pav", price: 119, desc: "Spicy egg bhurji served with buttered pav." },
-{ name: "Butter Bread (2 pieces)", price: 39, desc: "Toasted bread with butter." },
-{ name: "Garlic Bread", price: 79, desc: "Crispy garlic-flavored bread." }
-],
-  "🔥 Starters": [
-    { name: "Dice Roll Fries", price: 149, desc: "Classic golden fries, crispy and addictive." },
-{ name: "Checkmate Cheese Balls", price: 179, desc: "Crunchy outside with molten cheese inside." },
-{ name: "Knight’s Nachos (Veg)", price: 199, desc: "Nachos loaded with cheese, salsa, and veggies." },
-{ name: "Knight’s Nachos (Chicken)", price: 229, desc: "Nachos topped with spicy chicken and cheese." },
-{ name: "Queen’s Garlic Bread", price: 169, desc: "Herb garlic bread with buttery finish." },
-{ name: "Meeple Masala Fries", price: 159, desc: "Fries tossed in bold Indian masala." },
-{ name: "Pawn Popcorn", price: 129, desc: "Light, crispy salted popcorn." },
-{ name: "Chicken Popcorn", price: 159, desc: "Juicy fried chicken bites." },
-{ name: "Peri-Peri Fries", price: 169, desc: "Spicy peri-peri seasoned fries." }
-  ],
-  "🍔 Burgers & Sandwiches": [
-{ name: "Veg Burger", price: 179, desc: "Grilled veg patty with lettuce and sauce." },
-{ name: "Paneer Tikka Burger", price: 199, desc: "Paneer tikka patty with mint mayo." },
-{ name: "Chicken Burger", price: 199, desc: "Juicy grilled chicken patty." },
-{ name: "Crispy Chicken Burger", price: 229, desc: "Crunchy fried chicken with creamy sauce." },
-{ name: "Veg Grilled Sandwich", price: 169, desc: "Grilled sandwich stuffed with veggies." },
-{ name: "Paneer Grilled Sandwich", price: 179, desc: "Spiced paneer grilled sandwich." },
-{ name: "Chicken Club Sandwich", price: 209, desc: "Triple-layer chicken sandwich." },
-{ name: "Corn & Cheese Sandwich", price: 169, desc: "Creamy corn and cheese filling." },
-{ name: "Chocolate Sandwich", price: 189, desc: "Sweet chocolate-filled sandwich." }
-  ],
-  "🍕 Perfectly Played Pizzas": [
-{ name: "Margherita Pizza", price: 219, desc: "Classic tomato and mozzarella pizza." },
-{ name: "Vegetarian Delight Pizza", price: 269, desc: "Loaded with fresh vegetables and cheese." },
-{ name: "Paneer Tikka Pizza", price: 299, desc: "Paneer tikka, capsicum, onion, and cheese." },
-{ name: "Mushroom Cheese Feast Pizza", price: 249, desc: "Cheesy pizza topped with mushrooms." },
-{ name: "Chicken Tikka Pizza", price: 319, desc: "Smoky chicken tikka with cheese." },
-{ name: "Peri-Peri Chicken Pizza", price: 329, desc: "Spicy peri-peri chicken delight." },
-{ name: "Pepperoni Pizza", price: 339, desc: "Classic pepperoni slices and cheese." },
-{ name: "Chicken Overload Pizza", price: 359, desc: "Extra chicken, extra cheese." }
-],
-"🍜 Mindful Maggi": [
-{ name: "Classic Masala Maggi", price: 139, desc: "Classic Maggi with signature masala." },
-{ name: "Peri-Peri Maggi", price: 149, desc: "Spicy peri-peri flavored Maggi." },
-{ name: "Paneer Tikka Maggi", price: 159, desc: "Maggi mixed with paneer tikka." },
-{ name: "Cheesy Maggi", price: 159, desc: "Creamy cheesy Maggi." },
-{ name: "Chicken Maggi", price: 179, desc: "Maggi cooked with chicken pieces." },
-{ name: "Chicken Keema Maggi", price: 179, desc: "Flavorful Maggi with chicken keema." }
-],
-  "🍝 Checkmate Pastas": [
-{ name: "Classic White Sauce Pasta", price: 179, desc: "Creamy white sauce pasta." },
-{ name: "Classic Red Sauce Pasta", price: 169, desc: "Tangy tomato-based pasta." },
-{ name: "Pink Sauce Pasta", price: 189, desc: "Blend of red and white sauce." },
-{ name: "White Sauce Chicken Pasta", price: 229, desc: "Creamy pasta with chicken." },
-{ name: "Red Sauce Chicken Pasta", price: 219, desc: "Spicy red sauce pasta with chicken." },
-{ name: "Pink Sauce Chicken Pasta", price: 239, desc: "Rich pink sauce with chicken." },
-{ name: "Arrabbiata Pasta", price: 179, desc: "Spicy garlic chili pasta." },
-{ name: "Cheesy Garlic Pasta", price: 189, desc: "Garlic pasta loaded with cheese." }
-],
-  "☕ Drinks": [
-    { name: "Masala Chai", price: 49, desc: "Traditional Indian spiced tea." },
-{ name: "Elaichi Chai", price: 49, desc: "Cardamom infused aromatic tea." },
-{ name: "Ginger Tea", price: 49, desc: "Strong ginger flavored tea." },
-{ name: "Filter Coffee", price: 49, desc: "South Indian style filter coffee." },
-{ name: "Hot Chocolate", price: 99, desc: "Rich creamy hot chocolate." },
-{ name: "Lemon Honey Tea", price: 49, desc: "Soothing lemon tea with honey." },
-{ name: "Iced Coffee", price: 109, desc: "Cold brewed coffee with ice." },
-{ name: "Iced Mocha", price: 129, desc: "Cold coffee blended with chocolate." },
-{ name: "Cold Cocoa", price: 129, desc: "Chilled chocolate beverage." },
-{ name: "Fresh Lime Soda", price: 69, desc: "Refreshing lime soda (sweet or salt)." },
-{ name: "Water", price: "MRP", desc: "Packaged drinking water." }
-  ],
-"🍰 Castle Desserts": [
-{ name: "Molten Choco Lava Cake", price: 179, desc: "Warm chocolate cake with molten center." },
-{ name: "Chocolate Sundae", price: 199, desc: "Ice cream topped with chocolate sauce." },
-{ name: "Tres Leches Cake", price: 179, desc: "Soft cake soaked in three-milk blend." },
-{ name: "Brownie with Ice Cream", price: 189, desc: "Warm brownie served with vanilla ice cream." },
-{ name: "Oreo Sundae", price: 199, desc: "Creamy sundae with Oreo crumbles." },
-{ name: "Hot Chocolate Pudding", price: 199, desc: "Rich baked chocolate pudding." },
-{ name: "New York Cheesecake", price: 199, desc: "Classic creamy cheesecake." },
-{ name: "Gulab Jamun Ice Cream", price: 169, desc: "Gulab jamun served with ice cream." }
-],
-"🎯 Combos": [
-{ name: "Pawn Power Combo", price: 179, desc: "Popcorn + beverage combo." },
-{ name: "Dice & Dip Combo", price: 249, desc: "Fries with dip and drink." },
-{ name: "Checkmate Veg Combo", price: 349, desc: "Veg starter + fries + drink." },
-{ name: "Knight Non-Veg Combo", price: 399, desc: "Chicken starter + fries + drink." },
-{ name: "Duo Dice Combo", price: 599, desc: "Perfect sharing combo for two." },
-{ name: "Meeple Platter Combo", price: 649, desc: "Assorted starters with drinks." },
-{ name: "Burger Play Combo", price: 499, desc: "Burger, fries, and beverage." },
-{ name: "Sandwich Strategy Combo", price: 459, desc: "Sandwich, fries, and beverage." },
-{ name: "Big Game Combo", price: 699, desc: "Pizza, starter, and drinks." },
-{ name: "Chess Challenge Combo", price: 699, desc: "Mocktails, popcorn, and desserts." }
-]
-};
-
-
-const tabs = document.getElementById("tabs");
-const menu = document.getElementById("menu");
-
-let index = 0;
-
-for (const section in menuData) {
-  const tab = document.createElement("button");
-  tab.className = "tab-btn";
-  tab.textContent = section;
-  tab.dataset.tab = index;
-  tabs.appendChild(tab);
-
-  const content = document.createElement("div");
-  content.className = "tab-content";
-  content.dataset.tab = index;
-
-  content.innerHTML = menuData[section].map(item => `
-    <div class="menu-item">
-      <div>
-        <h3>${item.name}</h3>
-        <div class="desc">${item.desc}</div>
-        <div class="price">${item.price}</div>
-      </div>
-      <div class="actions">
-        <button class="add-btn" onclick="addItem(this)">Add</button>
-        <div class="qty-control">
-          <button onclick="updateQty(this,-1)">−</button>
-          <span class="qty-value">1</span>
-          <button onclick="updateQty(this,1)">+</button>
-        </div>
-      </div>
-    </div>
-  `).join("");
-
-  menu.appendChild(content);
-  index++;
-}
-
-document.querySelectorAll(".tab-btn")[0].classList.add("active");
-document.querySelectorAll(".tab-content")[0].classList.add("active");
-
-document.querySelectorAll(".tab-btn").forEach(btn => {
-  btn.onclick = () => {
-    document.querySelectorAll(".tab-btn").forEach(b => b.classList.remove("active"));
-    document.querySelectorAll(".tab-content").forEach(c => c.classList.remove("active"));
-    btn.classList.add("active");
-    document.querySelector(`.tab-content[data-tab="${btn.dataset.tab}"]`).classList.add("active");
-  };
-});
-
-let cart = [];
-
-function addItem(btn) {
-  const card = btn.closest(".menu-item");
-  btn.style.display = "none";
-  card.querySelector(".qty-control").style.display = "flex";
-
-  const name = card.querySelector("h3").innerText;
-  const price = parseInt(card.querySelector(".price").innerText.replace("",""));
-  cart.push({ name, price, qty: 1 });
-}
-
-function updateQty(btn, delta) {
-  const qtySpan = btn.parentElement.querySelector(".qty-value");
-  let qty = parseInt(qtySpan.innerText) + delta;
-  const card = btn.closest(".menu-item");
-  const addBtn = card.querySelector(".add-btn");
-  const name = card.querySelector("h3").innerText;
-
-  if (qty <= 0) {
-    btn.parentElement.style.display = "none";
-    addBtn.style.display = "inline-block";
-    cart = cart.filter(i => i.name !== name);
-  } else {
-    qtySpan.innerText = qty;
-    const item = cart.find(i => i.name === name);
-    if (item) item.qty = qty;
-  }
-}
-</script>
-
+<script src="script.js"></script>
 </body>
 </html>
-
