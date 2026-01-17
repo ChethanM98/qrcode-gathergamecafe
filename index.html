@@ -6,7 +6,6 @@
 <title>Gather & Game Café – Menu</title>
 
 <style>
-/* ---------- BASE ---------- */
 body {
   font-family: Arial, sans-serif;
   padding: 16px;
@@ -17,8 +16,8 @@ body {
 
 h1 {
   text-align: center;
-  margin-bottom: 12px;
   font-size: 22px;
+  margin-bottom: 8px;
 }
 
 #tableInfo {
@@ -27,82 +26,66 @@ h1 {
   margin-bottom: 10px;
 }
 
-/* ---------- TABS ---------- */
+/* Search */
+#search {
+  width: 100%;
+  padding: 12px;
+  border-radius: 999px;
+  border: 1px solid #ccc;
+  margin-bottom: 14px;
+  font-size: 16px;
+}
+
+/* Tabs */
 .tabs {
   display: flex;
   gap: 8px;
   overflow-x: auto;
   margin-bottom: 14px;
 }
-
-.tabs::-webkit-scrollbar {
-  display: none;
-}
+.tabs::-webkit-scrollbar { display: none; }
 
 .tab-btn {
   padding: 10px 14px;
-  background: #f6f1e7;
-  border: 2px solid #7b4b2a;
-  cursor: pointer;
   border-radius: 999px;
+  border: 2px solid #7b4b2a;
+  background: #f6f1e7;
   font-weight: bold;
   white-space: nowrap;
-  flex-shrink: 0;
 }
-
 .tab-btn.active {
   background: #7b4b2a;
   color: #fff;
 }
 
-/* ---------- MENU ---------- */
+/* Menu */
 .menu-container {
-  max-width: 1000px;
-  margin: auto;
-  padding-bottom: 90px; /* space for cart button */
+  padding-bottom: 90px;
 }
-
 .menu-item {
-  display: flex;
-  flex-direction: column;
-  gap: 10px;
   background: #fff;
   border-radius: 10px;
   padding: 14px;
   margin-bottom: 12px;
   box-shadow: 0 3px 8px rgba(0,0,0,0.12);
 }
+.menu-item h3 { margin: 0; }
+.desc { font-size: 13px; color: #5f4a3a; }
+.price { font-weight: bold; margin-top: 6px; }
 
-.menu-item h3 {
-  margin: 0;
-  font-size: 16px;
-}
-
-.desc {
-  font-size: 13px;
-  color: #5f4a3a;
-}
-
-.price {
-  font-weight: bold;
-  margin-top: 4px;
-}
-
-/* ---------- ACTIONS ---------- */
 .actions {
+  margin-top: 10px;
   display: flex;
   justify-content: flex-end;
-  align-items: center;
 }
 
 .add-btn {
   background: #3fa55b;
   border: none;
-  padding: 12px 20px;
-  color: white;
-  font-size: 16px;
-  cursor: pointer;
+  padding: 10px 18px;
+  color: #fff;
   border-radius: 999px;
+  font-size: 16px;
 }
 
 .qty {
@@ -110,19 +93,17 @@ h1 {
   align-items: center;
   gap: 10px;
 }
-
 .qty button {
   width: 32px;
   height: 32px;
   border-radius: 50%;
   border: none;
   background: #7b4b2a;
-  color: white;
+  color: #fff;
   font-size: 20px;
-  cursor: pointer;
 }
 
-/* ---------- CART BUTTON ---------- */
+/* Cart Button */
 .cart-btn {
   position: fixed;
   bottom: 16px;
@@ -133,18 +114,13 @@ h1 {
   border-radius: 999px;
   text-decoration: none;
   font-weight: bold;
-  box-shadow: 0 6px 16px rgba(0,0,0,0.25);
-  z-index: 999;
 }
-
 .cart-count {
   background: #fff;
   color: #3fa55b;
   margin-left: 8px;
   padding: 2px 8px;
   border-radius: 999px;
-  font-size: 14px;
-  font-weight: bold;
 }
 </style>
 </head>
@@ -155,16 +131,17 @@ h1 {
   🛒 Cart <span id="cart-count" class="cart-count">0</span>
 </a>
 
-<h1>🎲 Gather & Game Café Menu</h1>
+<h1>🎲 Gather & Game Café</h1>
 <div id="tableInfo"></div>
 
+<input id="search" placeholder="🔍 Search menu...">
+
 <div class="tabs" id="tabs"></div>
-<div id="menu" class="menu-container"></div>
+<div class="menu-container" id="menu"></div>
 
 <script>
 document.addEventListener("DOMContentLoaded", () => {
 
-  /* ================= TABLE ================= */
   const params = new URLSearchParams(location.search);
   const table = params.get("table") || "1";
   const CART_KEY = `cart_table_${table}`;
@@ -172,7 +149,6 @@ document.addEventListener("DOMContentLoaded", () => {
   document.getElementById("tableInfo").innerText = `Table ${table}`;
   document.getElementById("cartLink").href = `cart.html?table=${table}`;
 
-  /* ================= MENU DATA ================= */
   const menuData = {
   "🍳 Eggs & Breads": [
    { name: "Fried Eggs (2 eggs)", price: 49, desc: "Sunny-side up eggs cooked fresh." },
@@ -274,47 +250,41 @@ document.addEventListener("DOMContentLoaded", () => {
 ]
 }; 
 
-  let cart = JSON.parse(localStorage.getItem(CART_KEY)) || {};
+let cart = JSON.parse(localStorage.getItem(CART_KEY)) || {};
   let activeTab = Object.keys(menuData)[0];
 
-  const tabsDiv = document.getElementById("tabs");
-  const menuDiv = document.getElementById("menu");
+  const tabs = document.getElementById("tabs");
+  const menu = document.getElementById("menu");
   const cartCount = document.getElementById("cart-count");
 
-  /* ================= RENDER TABS ================= */
   function renderTabs() {
-    tabsDiv.innerHTML = "";
-    Object.keys(menuData).forEach(section => {
-      const btn = document.createElement("button");
-      btn.className = "tab-btn" + (section === activeTab ? " active" : "");
-      btn.textContent = section;
-      btn.onclick = () => {
-        activeTab = section;
-        renderTabs();
-        renderMenu();
-      };
-      tabsDiv.appendChild(btn);
+    tabs.innerHTML = "";
+    Object.keys(menuData).forEach(tab => {
+      const b = document.createElement("button");
+      b.className = "tab-btn" + (tab === activeTab ? " active" : "");
+      b.textContent = tab;
+      b.onclick = () => { activeTab = tab; renderTabs(); renderMenu(); };
+      tabs.appendChild(b);
     });
   }
 
-  /* ================= RENDER MENU ================= */
   function renderMenu() {
-    menuDiv.innerHTML = "";
+    menu.innerHTML = "";
     let count = 0;
+    const q = document.getElementById("search").value.toLowerCase();
 
     menuData[activeTab].forEach(item => {
+      if (q && !item.name.toLowerCase().includes(q) && !item.desc.toLowerCase().includes(q)) return;
+
       const key = activeTab + "||" + item.name;
       const qty = cart[key]?.qty || 0;
       count += qty;
 
-      menuDiv.innerHTML += `
+      menu.innerHTML += `
         <div class="menu-item" data-key="${key}">
-          <div>
-            <h3>${item.name}</h3>
-            <div class="desc">${item.desc}</div>
-            <div class="price">₹${item.price}</div>
-          </div>
-
+          <h3>${item.name}</h3>
+          <div class="desc">${item.desc}</div>
+          <div class="price">₹${item.price}</div>
           <div class="actions">
             ${
               qty === 0
@@ -326,45 +296,35 @@ document.addEventListener("DOMContentLoaded", () => {
                    </div>`
             }
           </div>
-        </div>
-      `;
+        </div>`;
     });
 
     cartCount.innerText = count;
     localStorage.setItem(CART_KEY, JSON.stringify(cart));
   }
 
-  /* ================= EVENTS ================= */
-  menuDiv.addEventListener("click", e => {
+  menu.addEventListener("click", e => {
     const card = e.target.closest(".menu-item");
     if (!card) return;
-
     const key = card.dataset.key;
+    const price = parseInt(card.querySelector(".price").innerText.replace("₹",""));
     const name = card.querySelector("h3").innerText;
-    const price = parseFloat(card.querySelector(".price").innerText.replace("₹",""));
 
-    if (e.target.classList.contains("add-btn")) {
-      cart[key] = { name, price, qty: 1 };
-    }
-
-    if (e.target.classList.contains("plus")) {
-      cart[key].qty++;
-    }
-
+    if (e.target.classList.contains("add-btn")) cart[key] = { name, price, qty: 1 };
+    if (e.target.classList.contains("plus")) cart[key].qty++;
     if (e.target.classList.contains("minus")) {
       cart[key].qty--;
       if (cart[key].qty === 0) delete cart[key];
     }
-
     renderMenu();
   });
 
+  document.getElementById("search").addEventListener("input", renderMenu);
+
   renderTabs();
   renderMenu();
-
 });
 </script>
 
 </body>
 </html>
-
