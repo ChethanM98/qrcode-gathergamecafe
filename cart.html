@@ -20,10 +20,6 @@ body {
   box-shadow: 0 4px 12px rgba(0,0,0,0.15);
 }
 
-h1 {
-  text-align: center;
-}
-
 #cartItems p {
   display: flex;
   justify-content: space-between;
@@ -40,10 +36,6 @@ button {
   border: none;
   border-radius: 999px;
   cursor: pointer;
-}
-
-button:hover {
-  background: #2f8c4c;
 }
 
 .back-link {
@@ -72,6 +64,13 @@ button:hover {
   <a href="index.html" class="back-link">← Back to Menu</a>
 </div>
 
+<!-- ✅ Load logic -->
 <script src="script.js"></script>
+
+<!-- ✅ Auto-render cart (NO extra body) -->
+<script>
+  document.addEventListener("DOMContentLoaded", showCart);
+</script>
+
 </body>
 </html>
