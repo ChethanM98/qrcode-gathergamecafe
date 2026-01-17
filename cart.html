@@ -68,7 +68,7 @@ button, a {
   color: #fff;
 }
 
-.checkout-btn {
+.place-btn {
   background: #3fa55b;
   color: #fff;
 }
@@ -77,7 +77,7 @@ button, a {
 
 <body>
 
-<h1>🛒 Your Cart</h1>
+<h1>🧾 Review Order</h1>
 
 <div class="cart-container">
   <div id="table-info"></div>
@@ -86,7 +86,7 @@ button, a {
 
   <div class="actions">
     <a id="backBtn" class="back-btn">⬅ Back to Menu</a>
-    <button class="checkout-btn">Place Order</button>
+    <button class="place-btn" onclick="placeOrder()">Place Order</button>
   </div>
 </div>
 
@@ -94,11 +94,12 @@ button, a {
 document.addEventListener("DOMContentLoaded", function () {
 
   /* ================================
-     1. GET TABLE NUMBER
+     1. TABLE NUMBER
   ================================= */
   const params = new URLSearchParams(window.location.search);
   const tableNo = params.get("table") || "default";
   const CART_KEY = `cart_table_${tableNo}`;
+  const KITCHEN_KEY = "kitchen_orders";
 
   document.getElementById("table-info").innerHTML =
     `<strong>Table No:</strong> ${tableNo}`;
@@ -131,20 +132,54 @@ document.addEventListener("DOMContentLoaded", function () {
         </div>
       `;
     }
-
     totalDiv.innerText = `Total: ₹${total}`;
   }
 
   /* ================================
-     3. BACK TO MENU (TABLE SAFE)
+     3. BACK TO MENU
   ================================= */
   document.getElementById("backBtn").href =
-    `index.html?table=${tableNo}`;
+    `menu.html?table=${tableNo}`;
+
+  /* ================================
+     4. PLACE ORDER (KITCHEN)
+  ================================= */
+  window.placeOrder = function () {
+
+    if (Object.keys(cart).length === 0) {
+      alert("Cart is empty");
+      return;
+    }
+
+    const kitchenOrders =
+      JSON.parse(localStorage.getItem(KITCHEN_KEY)) || [];
+
+    const now = new Date();
+    const time =
+      now.toISOString().slice(0, 19).replace("T", " ");
+
+    kitchenOrders.push({
+      table: tableNo,
+      items: cart,
+      total: total,
+      time: time,
+      status: "New"
+    });
+
+    // Save kitchen orders
+    localStorage.setItem(KITCHEN_KEY, JSON.stringify(kitchenOrders));
+
+    // Clear only THIS table cart
+    localStorage.removeItem(CART_KEY);
+
+    alert("Order placed successfully!");
+
+    // Optional: redirect back to menu
+    window.location.href = `menu.html?table=${tableNo}`;
+  };
 
 });
 </script>
 
 </body>
 </html>
-
-
