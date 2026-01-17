@@ -65,8 +65,9 @@ document.addEventListener("DOMContentLoaded", function () {
   ];
 
   const menu = document.getElementById("menu");
+  const cartList = document.getElementById("cart-list");
+  const cartCountEl = document.getElementById("cart-count");
 
-  // STEP 2: Cart in JS memory
   let cart = {};
 
   menu.innerHTML = menuData.map(item => `
@@ -91,14 +92,30 @@ document.addEventListener("DOMContentLoaded", function () {
     </div>
   `).join("");
 
-  window.showQty = function (btn, name, price) {
-    const actions = btn.parentElement;
-    btn.style.display = "none";
-    actions.querySelector(".qty-control").style.display = "flex";
+  function updateCartCount() {
+    let total = 0;
+    for (const item in cart) {
+      total += cart[item].qty;
+    }
+    cartCountEl.innerText = total;
+  }
 
-    // Add to cart with qty 1
+  function renderCartDebug() {
+    cartList.innerHTML = "";
+    for (const name in cart) {
+      const li = document.createElement("li");
+      li.innerText = `${name} × ${cart[name].qty}`;
+      cartList.appendChild(li);
+    }
+  }
+
+  window.showQty = function (btn, name, price) {
+    btn.style.display = "none";
+    btn.parentElement.querySelector(".qty-control").style.display = "flex";
+
     cart[name] = { price, qty: 1 };
-    console.log(cart);
+    updateCartCount();
+    renderCartDebug();
   };
 
   window.changeQty = function (btn, delta, name) {
@@ -115,14 +132,16 @@ document.addEventListener("DOMContentLoaded", function () {
       cart[name].qty = qty;
     }
 
-    console.log(cart);
+    updateCartCount();
+    renderCartDebug();
   };
 
 });
 </script>
-  
+ 
 </body>
 </html>
+
 
 
 
