@@ -2,194 +2,24 @@
 <html lang="en">
 <head>
 <meta charset="UTF-8">
-<meta name="viewport" content="width=device-width, initial-scale=1.0">
 <title>Gather & Game Café – Menu</title>
-
-<style>
-/* ---------- BOARD GAME BACKGROUND ---------- */
-body {
-  font-family: Arial, sans-serif;
-  padding: 20px;
-  margin: 0;
-  color: #2e1d12;
-
-  background:
-    radial-gradient(circle at 20% 30%, rgba(123,75,42,0.12) 2px, transparent 3px),
-    radial-gradient(circle at 70% 60%, rgba(63,165,91,0.12) 2px, transparent 3px),
-    radial-gradient(circle at 40% 80%, rgba(0,0,0,0.08) 2px, transparent 3px),
-    linear-gradient(135deg, #f6f1e7, #e7dbc8);
-
-  background-size:
-    120px 120px,
-    160px 160px,
-    200px 200px,
-    cover;
-
-  background-attachment: fixed;
-}
-
-/* ---------- HEADER ---------- */
-h1 {
-  text-align: center;
-  margin-bottom: 20px;
-  letter-spacing: 1px;
-}
-
-/* ---------- TABS ---------- */
-.tabs {
-  display: flex;
-  gap: 10px;
-  justify-content: center;
-  overflow-x: auto;
-  margin-bottom: 20px;
-}
-
-.tab-btn {
-  padding: 10px 16px;
-  background: #f6f1e7;
-  border: 2px solid #7b4b2a;
-  cursor: pointer;
-  border-radius: 999px;
-  font-weight: bold;
-  white-space: nowrap;
-}
-
-.tab-btn.active {
-  background: #7b4b2a;
-  color: #fff;
-}
-
-/* ---------- MENU ---------- */
-.menu-container {
-  max-width: 1000px;
-  margin: auto;
-}
-
-.tab-content {
-  display: none;
-}
-
-.tab-content.active {
-  display: block;
-}
-
-/* ---------- MENU ITEM ---------- */
-.menu-item {
-  display: flex;
-  justify-content: space-between;
-  align-items: center;
-  background: rgba(255,255,255,0.95);
-  border-radius: 10px;
-  padding: 15px;
-  margin-bottom: 14px;
-  box-shadow: 0 4px 12px rgba(0,0,0,0.12);
-}
-
-.menu-item h3 {
-  margin: 0;
-}
-
-.desc {
-  font-size: 14px;
-  color: #5f4a3a;
-  margin: 4px 0;
-}
-
-.price {
-  font-weight: bold;
-}
-
-/* ---------- ACTIONS ---------- */
-.actions {
-  display: flex;
-  align-items: center;
-}
-
-/* Add button */
-.add-btn {
-  background: #3fa55b;
-  border: none;
-  padding: 10px 18px;
-  color: white;
-  font-size: 14px;
-  cursor: pointer;
-  border-radius: 999px;
-}
-
-/* Qty controls */
-.qty-control {
-  display: none;
-  align-items: center;
-  gap: 10px;
-  background: #fff;
-  border-radius: 999px;
-  padding: 6px 12px;
-  box-shadow: 0 3px 10px rgba(0,0,0,0.2);
-}
-
-.qty-control button {
-  width: 28px;
-  height: 28px;
-  border-radius: 50%;
-  border: none;
-  background: #7b4b2a;
-  color: white;
-  font-size: 18px;
-  cursor: pointer;
-}
-
-.qty-value {
-  font-weight: bold;
-  min-width: 18px;
-  text-align: center;
-}
-/* ---------- GO TO CART BUTTON ---------- */
-.cart-btn {
-  position: fixed;
-  bottom: 20px;
-  right: 20px;
-
-  background: #3fa55b;
-  color: #ffffff;
-  text-decoration: none;
-
-  padding: 14px 22px;
-  border-radius: 999px; /* curved rectangle */
-  font-size: 16px;
-  font-weight: bold;
-
-  box-shadow: 0 6px 16px rgba(0,0,0,0.25);
-  transition: transform 0.2s ease, background 0.2s ease;
-  z-index: 999;
-}
-
-.cart-btn:hover {
-  background: #2f8c4c;
-  transform: translateY(-2px);
-}
-.cart-count {
-  background: #ffffff;
-  color: #3fa55b;
-  margin-left: 8px;
-  padding: 2px 8px;
-  border-radius: 999px;
-  font-size: 14px;
-  font-weight: bold;
-}
-</style>
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<link rel="stylesheet" href="style.css">
 </head>
 
 <body>
+
 <a href="cart.html" class="cart-btn">
-  🛒 Go to Cart
-  <span id="cart-count" class="cart-count">0</span>
+  🛒 Go to Cart <span id="cart-count" class="cart-count">0</span>
 </a>
+
 <h1>🎲 Gather & Game Café Menu</h1>
 
 <div class="tabs" id="tabs"></div>
 <div id="menu" class="menu-container"></div>
 
 <script>
+  
 const menuData = {
   "🍳 Eggs & Breads": [
    { name: "Fried Eggs (2 eggs)", price: 49, desc: "Sunny-side up eggs cooked fresh." },
@@ -291,22 +121,20 @@ const menuData = {
 ]
 };
 
-
 const tabs = document.getElementById("tabs");
 const menu = document.getElementById("menu");
-
-let index = 0;
+let idx = 0;
 
 for (const section in menuData) {
   const tab = document.createElement("button");
   tab.className = "tab-btn";
   tab.textContent = section;
-  tab.dataset.tab = index;
+  tab.dataset.tab = idx;
   tabs.appendChild(tab);
 
   const content = document.createElement("div");
   content.className = "tab-content";
-  content.dataset.tab = index;
+  content.dataset.tab = idx;
 
   content.innerHTML = menuData[section].map(item => `
     <div class="menu-item">
@@ -316,18 +144,21 @@ for (const section in menuData) {
         <div class="price">${item.price}</div>
       </div>
       <div class="actions">
-        <button class="add-btn" onclick="addItem(this)">Add</button>
-        <div class="qty-control">
-          <button onclick="updateQty(this,-1)">−</button>
+        <button class="add-btn"
+          onclick="addToCartFromUI(this,'${item.name}',${isNaN(item.price) ? 0 : item.price})">
+          Add
+        </button>
+        <div class="qty-control" style="display:none">
+          <button onclick="changeQty(this,-1)">−</button>
           <span class="qty-value">1</span>
-          <button onclick="updateQty(this,1)">+</button>
+          <button onclick="changeQty(this,1)">+</button>
         </div>
       </div>
     </div>
   `).join("");
 
   menu.appendChild(content);
-  index++;
+  idx++;
 }
 
 document.querySelectorAll(".tab-btn")[0].classList.add("active");
@@ -341,37 +172,8 @@ document.querySelectorAll(".tab-btn").forEach(btn => {
     document.querySelector(`.tab-content[data-tab="${btn.dataset.tab}"]`).classList.add("active");
   };
 });
-
-let cart = [];
-
-function addItem(btn) {
-  const card = btn.closest(".menu-item");
-  btn.style.display = "none";
-  card.querySelector(".qty-control").style.display = "flex";
-
-  const name = card.querySelector("h3").innerText;
-  const price = parseInt(card.querySelector(".price").innerText.replace("",""));
-  cart.push({ name, price, qty: 1 });
-}
-
-function updateQty(btn, delta) {
-  const qtySpan = btn.parentElement.querySelector(".qty-value");
-  let qty = parseInt(qtySpan.innerText) + delta;
-  const card = btn.closest(".menu-item");
-  const addBtn = card.querySelector(".add-btn");
-  const name = card.querySelector("h3").innerText;
-
-  if (qty <= 0) {
-    btn.parentElement.style.display = "none";
-    addBtn.style.display = "inline-block";
-    cart = cart.filter(i => i.name !== name);
-  } else {
-    qtySpan.innerText = qty;
-    const item = cart.find(i => i.name === name);
-    if (item) item.qty = qty;
-  }
-}
 </script>
 
+<script src="script.js"></script>
 </body>
 </html>
