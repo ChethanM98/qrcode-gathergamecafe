@@ -1,59 +1,178 @@
 <!DOCTYPE html>
-<html>
+<html lang="en">
 <head>
 <meta charset="UTF-8">
-<title>Cart</title>
+<title>Your Order</title>
+
 <style>
-body { font-family: Arial; background:#f6f1e7; padding:20px; }
-.box { background:#fff; padding:20px; border-radius:10px; max-width:600px; margin:auto; }
-.row { display:flex; justify-content:space-between; margin-bottom:8px; }
+body {
+  font-family: Arial, sans-serif;
+  background: #f4efe8;
+  padding: 20px;
+}
+
+.container {
+  max-width: 600px;
+  margin: auto;
+  background: #ffffff;
+  padding: 20px;
+  border-radius: 10px;
+  box-shadow: 0 4px 12px rgba(0,0,0,0.15);
+}
+
+h1 {
+  text-align: center;
+}
+
+.table-info {
+  text-align: center;
+  font-weight: bold;
+  margin-bottom: 10px;
+}
+
+#cartItems .row {
+  display: flex;
+  justify-content: space-between;
+  margin: 8px 0;
+}
+
+.total {
+  font-size: 18px;
+  font-weight: bold;
+  text-align: right;
+  margin-top: 15px;
+}
+
+button {
+  width: 100%;
+  margin-top: 20px;
+  padding: 14px;
+  font-size: 16px;
+  background: #3fa55b;
+  color: white;
+  border: none;
+  border-radius: 999px;
+  cursor: pointer;
+}
+
+button:hover {
+  background: #2f8c4c;
+}
+
+.back-link {
+  display: block;
+  text-align: center;
+  margin-top: 15px;
+  text-decoration: none;
+  color: #7b4b2a;
+  font-weight: bold;
+}
+
+.empty {
+  text-align: center;
+  color: #666;
+}
 </style>
 </head>
 
 <body>
 
-<div class="box">
-  <h2 id="table"></h2>
-  <div id="items"></div>
-  <h3 id="total"></h3>
+<div class="container">
+  <h1>Your Order</h1>
+  <div id="tableInfo" class="table-info"></div>
+
+  <!-- Cart Items -->
+  <div id="cartItems"></div>
+
+  <!-- Total -->
+  <div id="total" class="total"></div>
+
+  <!-- Place Order -->
   <button onclick="placeOrder()">Place Order</button>
+
+  <!-- Back to Menu -->
+  <a id="backLink" class="back-link">← Back to Menu</a>
 </div>
 
 <script>
-document.addEventListener("DOMContentLoaded", () => {
+document.addEventListener("DOMContentLoaded", function () {
 
-  const params = new URLSearchParams(location.search);
-  const table = params.get("table") || "1";
+  /* =========================
+     TABLE NUMBER
+  ========================= */
+  const params = new URLSearchParams(window.location.search);
+  const table = params.get("table") || "default";
+
   const CART_KEY = `cart_table_${table}`;
   const KITCHEN_KEY = "kitchen_orders";
 
-  document.getElementById("table").innerText = "Table " + table;
+  document.getElementById("tableInfo").innerText =
+    `Table No: ${table}`;
 
+  document.getElementById("backLink").href =
+    `index.html?table=${table}`;
+
+  /* =========================
+     LOAD CART
+  ========================= */
   const cart = JSON.parse(localStorage.getItem(CART_KEY)) || {};
+  const cartItemsDiv = document.getElementById("cartItems");
+  const totalDiv = document.getElementById("total");
+
   let total = 0;
 
-  const itemsDiv = document.getElementById("items");
+  if (Object.keys(cart).length === 0) {
+    cartItemsDiv.innerHTML =
+      `<p class="empty">Your cart is empty</p>`;
+    totalDiv.innerText = "";
+    return;
+  }
 
-  Object.values(cart).forEach(i => {
-    total += i.price * i.qty;
-    itemsDiv.innerHTML += `
+  Object.values(cart).forEach(item => {
+    const itemTotal = item.price * item.qty;
+    total += itemTotal;
+
+    cartItemsDiv.innerHTML += `
       <div class="row">
-        <span>${i.name} × ${i.qty}</span>
-        <span>₹${i.price * i.qty}</span>
+        <span>${item.name} × ${item.qty}</span>
+        <span>₹${itemTotal}</span>
       </div>
     `;
   });
 
-  document.getElementById("total").innerText = "Total ₹" + total;
+  totalDiv.innerText = `Total: ₹${total}`;
 
-  window.placeOrder = () => {
-    const orders = JSON.parse(localStorage.getItem(KITCHEN_KEY)) || [];
-    orders.push({ table, cart, total, time: new Date().toLocaleString() });
-    localStorage.setItem(KITCHEN_KEY, JSON.stringify(orders));
+  /* =========================
+     PLACE ORDER → KITCHEN
+  ========================= */
+  window.placeOrder = function () {
+
+    const kitchenOrders =
+      JSON.parse(localStorage.getItem(KITCHEN_KEY)) || [];
+
+    kitchenOrders.push({
+      table: table,
+      items: cart,
+      total: total,
+      time: new Date().toLocaleString(),
+      status: "New"
+    });
+
+    // Save kitchen orders
+    localStorage.setItem(
+      KITCHEN_KEY,
+      JSON.stringify(kitchenOrders)
+    );
+
+    // Clear only this table cart
     localStorage.removeItem(CART_KEY);
-    alert("Order placed");
-    location.href = `index.html?table=${table}`;
+
+    alert("Order placed successfully!");
+
+    // Redirect back to menu
+    window.location.href = `index.html?table=${table}`;
   };
+
 });
 </script>
 
