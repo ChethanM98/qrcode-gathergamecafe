@@ -1,0 +1,100 @@
+<!DOCTYPE html>
+<html>
+<head>
+<title>Kitchen Display</title>
+
+<style>
+body {
+  font-family: Arial;
+  background:#1e1e1e;
+  color:#fff;
+  padding:20px;
+}
+
+.order {
+  background:#fff;
+  color:#000;
+  padding:20px;
+  margin-bottom:16px;
+  border-radius:10px;
+  border-left:8px solid #f39c12;
+}
+
+.order h2 {
+  margin:0 0 10px 0;
+}
+
+.item {
+  display:flex;
+  justify-content:space-between;
+  margin:6px 0;
+  font-size:16px;
+}
+
+select {
+  margin-top:12px;
+  padding:8px;
+  font-size:14px;
+  width:100%;
+}
+</style>
+</head>
+
+<body>
+
+<h1>👨‍🍳 Kitchen Orders</h1>
+<div id="list"></div>
+
+<script>
+document.addEventListener("DOMContentLoaded", () => {
+
+  const QUEUE_KEY = "kitchen_queue";
+  const list = document.getElementById("list");
+
+  load();
+  setInterval(load, 5000); // refresh every 5s
+
+  function load() {
+    const queue = JSON.parse(localStorage.getItem(QUEUE_KEY)) || [];
+    list.innerHTML = "";
+
+    if (queue.length === 0) {
+      list.innerHTML = "<p>No pending orders</p>";
+      return;
+    }
+
+    queue.forEach((order, index) => {
+      let itemsHTML = "";
+
+      for (const k in order.items) {
+        const i = order.items[k];
+        itemsHTML += `
+          <div class="item">
+            <span>${i.name} × ${i.qty}</span>
+          </div>`;
+      }
+
+      list.innerHTML += `
+        <div class="order">
+          <h2>Table ${order.table}</h2>
+          ${itemsHTML}
+          <select onchange="markServed(${index})">
+            <option value="">Pending</option>
+            <option value="Served">Served</option>
+          </select>
+        </div>`;
+    });
+  }
+
+  window.markServed = index => {
+    let queue = JSON.parse(localStorage.getItem(QUEUE_KEY)) || [];
+    queue.splice(index, 1);
+    localStorage.setItem(QUEUE_KEY, JSON.stringify(queue));
+    load();
+  };
+
+});
+</script>
+
+</body>
+</html>
