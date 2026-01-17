@@ -57,54 +57,72 @@ body {
 <div id="menu"></div>
 
 <script>
-const menuData = [
-  { name: "Masala Chai", price: 49 },
-  { name: "Coffee", price: 59 }
-];
+document.addEventListener("DOMContentLoaded", function () {
 
-const menu = document.getElementById("menu");
+  const menuData = [
+    { name: "Masala Chai", price: 49 },
+    { name: "Coffee", price: 59 }
+  ];
 
-menu.innerHTML = menuData.map(item => `
-  <div class="menu-item">
-    <div>
-      <strong>${item.name}</strong><br>
-      ₹${item.price}
-    </div>
+  const menu = document.getElementById("menu");
 
-    <div class="actions">
-      <button class="add-btn" onclick="showQty(this)">Add</button>
+  // STEP 2: Cart in JS memory
+  let cart = {};
 
-      <div class="qty-control">
-        <button onclick="changeQty(this, -1)">−</button>
-        <span class="qty-value">1</span>
-        <button onclick="changeQty(this, 1)">+</button>
+  menu.innerHTML = menuData.map(item => `
+    <div class="menu-item">
+      <div>
+        <strong>${item.name}</strong><br>
+        ₹${item.price}
+      </div>
+
+      <div class="actions">
+        <button class="add-btn"
+          onclick="showQty(this, '${item.name}', ${item.price})">
+          Add
+        </button>
+
+        <div class="qty-control">
+          <button onclick="changeQty(this, -1, '${item.name}')">-</button>
+          <span class="qty-value">1</span>
+          <button onclick="changeQty(this, 1, '${item.name}')">+</button>
+        </div>
       </div>
     </div>
-  </div>
-`).join("");
+  `).join("");
 
-function showQty(btn) {
-  const actions = btn.parentElement;
-  btn.style.display = "none";
-  actions.querySelector(".qty-control").style.display = "flex";
-}
+  window.showQty = function (btn, name, price) {
+    const actions = btn.parentElement;
+    btn.style.display = "none";
+    actions.querySelector(".qty-control").style.display = "flex";
 
-function changeQty(btn, delta) {
-  const qtySpan = btn.parentElement.querySelector(".qty-value");
-  let qty = parseInt(qtySpan.innerText) + delta;
+    // Add to cart with qty 1
+    cart[name] = { price, qty: 1 };
+    console.log(cart);
+  };
 
-  if (qty <= 0) {
-    // Hide qty, show Add again
-    btn.parentElement.style.display = "none";
-    btn.closest(".actions").querySelector(".add-btn").style.display = "inline-block";
-    qtySpan.innerText = 1;
-  } else {
-    qtySpan.innerText = qty;
-  }
-}
+  window.changeQty = function (btn, delta, name) {
+    const qtySpan = btn.parentElement.querySelector(".qty-value");
+    let qty = parseInt(qtySpan.innerText) + delta;
+
+    if (qty <= 0) {
+      delete cart[name];
+      btn.parentElement.style.display = "none";
+      btn.closest(".actions").querySelector(".add-btn").style.display = "inline-block";
+      qtySpan.innerText = 1;
+    } else {
+      qtySpan.innerText = qty;
+      cart[name].qty = qty;
+    }
+
+    console.log(cart);
+  };
+
+});
 </script>
-
+  
 </body>
 </html>
+
 
 
