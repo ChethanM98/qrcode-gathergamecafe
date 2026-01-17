@@ -58,13 +58,13 @@ document.addEventListener("DOMContentLoaded", () => {
         <div class="menu-item" data-id="${i.id}">
           <div>${i.name}<br>₹${i.price}</div>
           ${
-            qty === 0
-            ? `<button class="add-btn">Add</button>`
-            : `<div class="qty">
-                <button class="minus">-</button>
-                <span>${qty}</span>
-                <button class="plus">+</button>
-              </div>`
+qty === 0
+? `<button class="add-btn">Add</button>`
+: `<div class="qty" style="display:flex">
+     <button class="minus">-</button>
+     <span>${qty}</span>
+     <button class="plus">+</button>
+   </div>`
           }
         </div>
       `;
@@ -104,3 +104,4 @@ document.addEventListener("DOMContentLoaded", () => {
 
 </body>
 </html>
+
