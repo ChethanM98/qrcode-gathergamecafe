@@ -1,75 +1,100 @@
 <!DOCTYPE html>
 <html>
 <head>
+<meta charset="UTF-8">
 <title>Reports</title>
 
+<script>
+(function () {
+  const auth = localStorage.getItem("admin_auth");
+  const time = localStorage.getItem("admin_auth_time");
+
+  if (!auth || !time || Date.now() - time > 30 * 60 * 1000) {
+    localStorage.removeItem("admin_auth");
+    localStorage.removeItem("admin_auth_time");
+    location.href = "admin-login.html";
+  }
+})();
+</script>
+
 <style>
-body { font-family: Arial; background:#f6f1e7; padding:20px; }
-.box { background:#fff; padding:20px; border-radius:10px; max-width:700px; margin:auto; }
-button { margin:6px 0; padding:10px; width:100%; }
+body {
+  font-family: Arial;
+  background:#f6f1e7;
+  padding:20px;
+}
+.box {
+  background:#fff;
+  padding:20px;
+  border-radius:10px;
+  max-width:700px;
+  margin:auto;
+}
+.row {
+  display:flex;
+  justify-content:space-between;
+  margin:6px 0;
+}
+button {
+  padding:10px;
+  margin:6px 0;
+  width:100%;
+}
 </style>
 </head>
 
 <body>
 
 <div class="box">
-  <h1>📊 Reports</h1>
+  <h2>📊 Reports</h2>
 
-  <button onclick="daily()">📅 Daily Excel</button>
-  <button onclick="monthly()">📆 Monthly Excel</button>
-  <button onclick="screen()">📊 Monthly Summary (Screen)</button>
+  <button onclick="daily()">📅 Daily Report</button>
+  <button onclick="monthly()">📆 Monthly Report</button>
 
-  <div id="out"></div>
+  <div id="report"></div>
+
+  <button onclick="logout()">Logout</button>
 </div>
 
 <script>
 const CLOSED_KEY = "closed_bills";
-const out = document.getElementById("out");
-
-function csv(name, rows) {
-  const blob = new Blob([rows.map(r=>r.join(",")).join("\n")], {type:"text/csv"});
-  const a = document.createElement("a");
-  a.href = URL.createObjectURL(blob);
-  a.download = name;
-  a.click();
-}
+const reportDiv = document.getElementById("report");
 
 function daily() {
+  reportDiv.innerHTML = "";
   const bills = JSON.parse(localStorage.getItem(CLOSED_KEY)) || [];
-  const map = {};
-  bills.forEach(b => {
-    if (!map[b.date]) map[b.date] = { Cash:0, UPI:0, Total:0 };
-    map[b.date][b.payment] += b.grandTotal;
-    map[b.date].Total += b.grandTotal;
-  });
+  const today = new Date().toDateString();
+  let total = 0;
 
-  const rows = [["Date","Cash","UPI","Total"]];
-  for (const d in map) rows.push([d, map[d].Cash, map[d].UPI, map[d].Total]);
-  csv("daily_report.csv", rows);
+  bills.filter(b => new Date(b.time).toDateString() === today)
+    .forEach(b => {
+      total += b.total;
+      reportDiv.innerHTML += `
+        <div class="row">
+          <span>Table ${b.table}</span>
+          <span>₹${b.total}</span>
+        </div>`;
+    });
+
+  reportDiv.innerHTML += `<hr><b>Total: ₹${total}</b>`;
 }
 
 function monthly() {
+  reportDiv.innerHTML = "";
   const bills = JSON.parse(localStorage.getItem(CLOSED_KEY)) || [];
-  const map = {};
-  bills.forEach(b => {
-    if (!map[b.month]) map[b.month] = { Cash:0, UPI:0, Total:0 };
-    map[b.month][b.payment] += b.grandTotal;
-    map[b.month].Total += b.grandTotal;
-  });
+  const m = new Date().getMonth();
+  let total = 0;
 
-  const rows = [["Month","Cash","UPI","Total"]];
-  for (const m in map) rows.push([m, map[m].Cash, map[m].UPI, map[m].Total]);
-  csv("monthly_report.csv", rows);
+  bills.filter(b => new Date(b.time).getMonth() === m)
+    .forEach(b => total += b.total);
+
+  reportDiv.innerHTML = `<b>This Month Total: ₹${total}</b>`;
 }
 
-function screen() {
-  const bills = JSON.parse(localStorage.getItem(CLOSED_KEY)) || [];
-  const map = {};
-  bills.forEach(b => map[b.month] = (map[b.month] || 0) + b.grandTotal);
-
-  out.innerHTML = "<h3>Monthly Summary</h3>";
-  for (const m in map)
-    out.innerHTML += `<p>${m}: ₹${map[m].toFixed(2)}</p>`;
+function logout() {
+  localStorage.removeItem("admin_auth");
+  localStorage.removeItem("admin_auth_time");
+  location.href = "admin-login.html";
 }
 </script>
 
