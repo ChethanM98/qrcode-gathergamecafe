@@ -1,17 +1,22 @@
 <!DOCTYPE html>
 <html>
 <body>
+
 <h2>Admin Login</h2>
 <input type="password" id="pin" placeholder="Enter PIN">
 <button onclick="login()">Login</button>
 
 <script>
 function login() {
-  if (document.getElementById("pin").value === "1234") {
+  if (document.getElementById("pin").value === "9663") {
     sessionStorage.setItem("admin","yes");
-    location.href="admin.html";
-  } else alert("Wrong PIN");
+    location.href = "admin.html";
+  } else {
+    alert("Wrong PIN");
+  }
 }
 </script>
+
 </body>
 </html>
+
