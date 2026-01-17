@@ -6,34 +6,48 @@
 <title>Gather & Game Café – Menu</title>
 
 <style>
+/* ---------- BASE ---------- */
 body {
   font-family: Arial, sans-serif;
-  padding: 20px;
+  padding: 16px;
   margin: 0;
   background: linear-gradient(135deg, #f6f1e7, #e7dbc8);
+  color: #2e1d12;
 }
 
 h1 {
   text-align: center;
-  margin-bottom: 20px;
+  margin-bottom: 12px;
+  font-size: 22px;
 }
 
+#tableInfo {
+  text-align: center;
+  font-weight: bold;
+  margin-bottom: 10px;
+}
+
+/* ---------- TABS ---------- */
 .tabs {
   display: flex;
-  gap: 10px;
-  justify-content: center;
+  gap: 8px;
   overflow-x: auto;
-  margin-bottom: 20px;
+  margin-bottom: 14px;
+}
+
+.tabs::-webkit-scrollbar {
+  display: none;
 }
 
 .tab-btn {
-  padding: 10px 16px;
+  padding: 10px 14px;
   background: #f6f1e7;
   border: 2px solid #7b4b2a;
   cursor: pointer;
   border-radius: 999px;
   font-weight: bold;
   white-space: nowrap;
+  flex-shrink: 0;
 }
 
 .tab-btn.active {
@@ -41,54 +55,52 @@ h1 {
   color: #fff;
 }
 
+/* ---------- MENU ---------- */
 .menu-container {
   max-width: 1000px;
   margin: auto;
-}
-
-.tab-content {
-  display: none;
-}
-
-.tab-content.active {
-  display: block;
+  padding-bottom: 90px; /* space for cart button */
 }
 
 .menu-item {
   display: flex;
-  justify-content: space-between;
-  align-items: center;
+  flex-direction: column;
+  gap: 10px;
   background: #fff;
   border-radius: 10px;
-  padding: 15px;
-  margin-bottom: 14px;
-  box-shadow: 0 4px 12px rgba(0,0,0,0.12);
+  padding: 14px;
+  margin-bottom: 12px;
+  box-shadow: 0 3px 8px rgba(0,0,0,0.12);
 }
 
 .menu-item h3 {
   margin: 0;
+  font-size: 16px;
 }
 
 .desc {
-  font-size: 14px;
+  font-size: 13px;
   color: #5f4a3a;
-  margin: 4px 0;
 }
 
 .price {
   font-weight: bold;
+  margin-top: 4px;
 }
 
+/* ---------- ACTIONS ---------- */
 .actions {
   display: flex;
+  justify-content: flex-end;
   align-items: center;
 }
 
 .add-btn {
   background: #3fa55b;
   border: none;
-  padding: 10px 18px;
+  padding: 12px 20px;
   color: white;
+  font-size: 16px;
   cursor: pointer;
   border-radius: 999px;
 }
@@ -100,26 +112,29 @@ h1 {
 }
 
 .qty button {
-  width: 28px;
-  height: 28px;
+  width: 32px;
+  height: 32px;
   border-radius: 50%;
   border: none;
   background: #7b4b2a;
   color: white;
-  font-size: 18px;
+  font-size: 20px;
   cursor: pointer;
 }
 
+/* ---------- CART BUTTON ---------- */
 .cart-btn {
   position: fixed;
-  bottom: 20px;
-  right: 20px;
+  bottom: 16px;
+  right: 16px;
   background: #3fa55b;
   color: #fff;
   padding: 14px 22px;
   border-radius: 999px;
   text-decoration: none;
   font-weight: bold;
+  box-shadow: 0 6px 16px rgba(0,0,0,0.25);
+  z-index: 999;
 }
 
 .cart-count {
@@ -128,6 +143,8 @@ h1 {
   margin-left: 8px;
   padding: 2px 8px;
   border-radius: 999px;
+  font-size: 14px;
+  font-weight: bold;
 }
 </style>
 </head>
@@ -139,7 +156,7 @@ h1 {
 </a>
 
 <h1>🎲 Gather & Game Café Menu</h1>
-<p id="tableInfo" style="text-align:center"></p>
+<div id="tableInfo"></div>
 
 <div class="tabs" id="tabs"></div>
 <div id="menu" class="menu-container"></div>
@@ -152,7 +169,7 @@ document.addEventListener("DOMContentLoaded", () => {
   const table = params.get("table") || "1";
   const CART_KEY = `cart_table_${table}`;
 
-  document.getElementById("tableInfo").innerText = "Table " + table;
+  document.getElementById("tableInfo").innerText = `Table ${table}`;
   document.getElementById("cartLink").href = `cart.html?table=${table}`;
 
   /* ================= MENU DATA ================= */
@@ -256,10 +273,7 @@ document.addEventListener("DOMContentLoaded", () => {
 { name: "Chess Challenge Combo", price: 699, desc: "Mocktails, popcorn, and desserts." }
 ]
 }; 
-    window.menuData || {};
 
-
-  /* ================= STATE ================= */
   let cart = JSON.parse(localStorage.getItem(CART_KEY)) || {};
   let activeTab = Object.keys(menuData)[0];
 
@@ -306,7 +320,7 @@ document.addEventListener("DOMContentLoaded", () => {
               qty === 0
                 ? `<button class="add-btn">Add</button>`
                 : `<div class="qty">
-                     <button class="minus">-</button>
+                     <button class="minus">−</button>
                      <span>${qty}</span>
                      <button class="plus">+</button>
                    </div>`
@@ -353,3 +367,4 @@ document.addEventListener("DOMContentLoaded", () => {
 
 </body>
 </html>
+
