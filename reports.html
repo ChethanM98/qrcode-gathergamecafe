@@ -1,9 +1,10 @@
 <!DOCTYPE html>
-<html>
+<html lang="en">
 <head>
 <meta charset="UTF-8">
 <title>Reports</title>
 
+<!-- 🔐 AUTH PROTECTION -->
 <script>
 (function () {
   const auth = localStorage.getItem("admin_auth");
@@ -19,82 +20,180 @@
 
 <style>
 body {
-  font-family: Arial;
+  font-family: Arial, sans-serif;
   background:#f6f1e7;
   padding:20px;
 }
-.box {
-  background:#fff;
-  padding:20px;
-  border-radius:10px;
-  max-width:700px;
+
+.container {
+  max-width: 900px;
   margin:auto;
 }
-.row {
+
+h1 {
+  text-align:center;
+}
+
+.filter {
+  background:#fff;
+  padding:15px;
+  border-radius:10px;
+  margin-bottom:20px;
+  display:flex;
+  gap:10px;
+  align-items:center;
+}
+
+.filter input {
+  padding:8px;
+  font-size:14px;
+}
+
+.filter button {
+  padding:10px 14px;
+  background:#3fa55b;
+  color:#fff;
+  border:none;
+  border-radius:999px;
+  cursor:pointer;
+}
+
+.bill {
+  background:#fff;
+  padding:16px;
+  border-radius:10px;
+  margin-bottom:16px;
+  box-shadow:0 3px 8px rgba(0,0,0,0.15);
+}
+
+.bill h3 {
+  margin:0 0 6px 0;
+}
+
+.items {
+  margin:10px 0;
+}
+
+.item-row {
   display:flex;
   justify-content:space-between;
-  margin:6px 0;
+  font-size:14px;
+  margin:4px 0;
 }
-button {
-  padding:10px;
-  margin:6px 0;
-  width:100%;
+
+.total {
+  text-align:right;
+  font-weight:bold;
+  margin-top:8px;
+}
+
+.summary {
+  background:#fff;
+  padding:16px;
+  border-radius:10px;
+  margin-top:20px;
+  font-size:16px;
+  font-weight:bold;
+}
+
+.logout {
+  margin-top:20px;
+  background:#7b4b2a;
 }
 </style>
 </head>
 
 <body>
 
-<div class="box">
-  <h2>📊 Reports</h2>
+<div class="container">
+  <h1>📊 Sales Reports</h1>
 
-  <button onclick="daily()">📅 Daily Report</button>
-  <button onclick="monthly()">📆 Monthly Report</button>
+  <!-- 🔍 DATE FILTER -->
+  <div class="filter">
+    <label>From</label>
+    <input type="date" id="from">
+    <label>To</label>
+    <input type="date" id="to">
+    <button onclick="loadReports()">Apply</button>
+  </div>
 
-  <div id="report"></div>
+  <!-- 📄 REPORT BLOCK -->
+  <div id="reports"></div>
 
-  <button onclick="logout()">Logout</button>
+  <!-- 📌 SUMMARY -->
+  <div id="summary" class="summary" style="display:none"></div>
+
+  <button class="logout" onclick="logout()">Logout</button>
 </div>
 
 <script>
 const CLOSED_KEY = "closed_bills";
-const reportDiv = document.getElementById("report");
 
-function daily() {
-  reportDiv.innerHTML = "";
+function loadReports() {
+  const from = document.getElementById("from").value;
+  const to = document.getElementById("to").value;
+
   const bills = JSON.parse(localStorage.getItem(CLOSED_KEY)) || [];
-  const today = new Date().toDateString();
-  let total = 0;
+  const reportsDiv = document.getElementById("reports");
+  const summaryDiv = document.getElementById("summary");
 
-  bills.filter(b => new Date(b.time).toDateString() === today)
-    .forEach(b => {
-      total += b.total;
-      reportDiv.innerHTML += `
-        <div class="row">
-          <span>Table ${b.table}</span>
-          <span>₹${b.total}</span>
-        </div>`;
+  reportsDiv.innerHTML = "";
+  summaryDiv.style.display = "none";
+
+  if (!from || !to) {
+    alert("Select both From and To dates");
+    return;
+  }
+
+  const fromDate = new Date(from);
+  const toDate = new Date(to);
+  toDate.setHours(23,59,59,999);
+
+  let grandTotal = 0;
+
+  bills
+    .filter(b => {
+      const d = new Date(b.time);
+      return d >= fromDate && d <= toDate;
+    })
+    .forEach(bill => {
+
+      let itemsHTML = "";
+      for (const k in bill.items) {
+        const i = bill.items[k];
+        itemsHTML += `
+          <div class="item-row">
+            <span>${i.name} × ${i.qty}</span>
+            <span>₹${i.price * i.qty}</span>
+          </div>
+        `;
+      }
+
+      grandTotal += bill.total;
+
+      reportsDiv.innerHTML += `
+        <div class="bill">
+          <h3>Table ${bill.table}</h3>
+          <div>🕒 ${new Date(bill.time).toLocaleString()}</div>
+          <div class="items">${itemsHTML}</div>
+          <div class="total">Bill Total: ₹${bill.total.toFixed(2)}</div>
+        </div>
+      `;
     });
 
-  reportDiv.innerHTML += `<hr><b>Total: ₹${total}</b>`;
-}
+  if (reportsDiv.innerHTML === "") {
+    reportsDiv.innerHTML = "<p>No records found</p>";
+    return;
+  }
 
-function monthly() {
-  reportDiv.innerHTML = "";
-  const bills = JSON.parse(localStorage.getItem(CLOSED_KEY)) || [];
-  const m = new Date().getMonth();
-  let total = 0;
-
-  bills.filter(b => new Date(b.time).getMonth() === m)
-    .forEach(b => total += b.total);
-
-  reportDiv.innerHTML = `<b>This Month Total: ₹${total}</b>`;
+  summaryDiv.style.display = "block";
+  summaryDiv.innerText = `Grand Total: ₹${grandTotal.toFixed(2)}`;
 }
 
 function logout() {
   localStorage.removeItem("admin_auth");
   localStorage.removeItem("admin_auth_time");
-  location.href = "admin-login.html?redirect=reports.html";
+  location.href = "admin-login.html";
 }
 </script>
 
