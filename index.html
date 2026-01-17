@@ -342,24 +342,60 @@ document.querySelectorAll(".tab-btn").forEach(btn => {
   };
 });
 
-let cart = [];
+let cart = JSON.parse(localStorage.getItem("cart")) || [];
+updateCartCount();
 
 function addItem(btn) {
   const card = btn.closest(".menu-item");
+  const name = card.querySelector("h3").innerText;
+
+  let priceText = card.querySelector(".price").innerText;
+  let price = isNaN(parseInt(priceText)) ? 0 : parseInt(priceText);
+
   btn.style.display = "none";
   card.querySelector(".qty-control").style.display = "flex";
 
-  const name = card.querySelector("h3").innerText;
-  const price = parseInt(card.querySelector(".price").innerText.replace("",""));
-  cart.push({ name, price, qty: 1 });
+  const found = cart.find(i => i.name === name);
+  if (found) {
+    found.qty += 1;
+  } else {
+    cart.push({ name, price, qty: 1 });
+  }
+
+  saveCart();
 }
 
 function updateQty(btn, delta) {
   const qtySpan = btn.parentElement.querySelector(".qty-value");
-  let qty = parseInt(qtySpan.innerText) + delta;
   const card = btn.closest(".menu-item");
-  const addBtn = card.querySelector(".add-btn");
   const name = card.querySelector("h3").innerText;
+  const addBtn = card.querySelector(".add-btn");
+
+  let qty = parseInt(qtySpan.innerText) + delta;
+
+  if (qty <= 0) {
+    btn.parentElement.style.display = "none";
+    addBtn.style.display = "inline-block";
+    cart = cart.filter(i => i.name !== name);
+  } else {
+    qtySpan.innerText = qty;
+    const item = cart.find(i => i.name === name);
+    if (item) item.qty = qty;
+  }
+
+  saveCart();
+}
+
+function saveCart() {
+  localStorage.setItem("cart", JSON.stringify(cart));
+  updateCartCount();
+}
+
+function updateCartCount() {
+  const count = cart.reduce((sum, i) => sum + i.qty, 0);
+  document.getElementById("cart-count").innerText = count;
+}
+
 
   if (qty <= 0) {
     btn.parentElement.style.display = "none";
@@ -375,3 +411,4 @@ function updateQty(btn, delta) {
 
 </body>
 </html>
+
