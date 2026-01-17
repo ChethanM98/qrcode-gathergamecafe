@@ -29,6 +29,7 @@ button, select {
 }
 </style>
 </head>
+
 <body>
 
 <h1>🍽️ Kitchen & Billing</h1>
@@ -40,6 +41,81 @@ button, select {
 <button onclick="loadMonthly()">📊 Monthly Summary (Screen)</button>
 <div id="report"></div>
 
-<script src="script.js"></script>
+<script>
+document.addEventListener("DOMContentLoaded", function () {
+
+  const KITCHEN_KEY = "kitchen_orders";
+  const ordersDiv = document.getElementById("orders");
+
+  loadKitchenOrders();
+
+  function loadKitchenOrders() {
+    const orders =
+      JSON.parse(localStorage.getItem(KITCHEN_KEY)) || [];
+
+    ordersDiv.innerHTML = "";
+
+    if (orders.length === 0) {
+      ordersDiv.innerHTML = "<p>No kitchen orders yet</p>";
+      return;
+    }
+
+    orders.forEach((order, index) => {
+      let itemsHtml = "";
+      for (const name in order.items) {
+        const item = order.items[name];
+        itemsHtml += `
+          <div class="line">
+            <span>${name} × ${item.qty}</span>
+            <span>₹${item.price * item.qty}</span>
+          </div>
+        `;
+      }
+
+      ordersDiv.innerHTML += `
+        <div class="table-box">
+          <strong>Table:</strong> ${order.table}<br>
+          <strong>Time:</strong> ${order.time}<br>
+          <strong>Status:</strong>
+          <select onchange="updateStatus(${index}, this.value)">
+            <option ${order.status==="New"?"selected":""}>New</option>
+            <option ${order.status==="Preparing"?"selected":""}>Preparing</option>
+            <option ${order.status==="Ready"?"selected":""}>Ready</option>
+            <option ${order.status==="Served"?"selected":""}>Served</option>
+          </select>
+
+          <div class="invoice">
+            ${itemsHtml}
+            <hr>
+            <div class="line">
+              <strong>Total</strong>
+              <strong>₹${order.total}</strong>
+            </div>
+          </div>
+
+          <button onclick="printInvoice(this)">🖨️ Print</button>
+        </div>
+      `;
+    });
+  }
+
+  window.updateStatus = function (index, status) {
+    const orders =
+      JSON.parse(localStorage.getItem(KITCHEN_KEY)) || [];
+    orders[index].status = status;
+    localStorage.setItem(KITCHEN_KEY, JSON.stringify(orders));
+    loadKitchenOrders();
+  };
+
+  window.printInvoice = function (btn) {
+    btn.closest(".table-box")
+       .querySelector(".invoice")
+       .classList.add("print");
+    window.print();
+  };
+
+});
+</script>
+
 </body>
 </html>
