@@ -16,6 +16,7 @@ body {
   margin-bottom:20px;
   border-radius:10px;
   border:2px solid #333;
+  page-break-inside: avoid;
 }
 
 .table-title {
@@ -69,18 +70,27 @@ select, button {
   cursor:pointer;
 }
 
+/* ===== PRINT FIX ===== */
 @media print {
   body * {
-    visibility:hidden;
+    visibility: hidden;
   }
-  .order-box, .order-box * {
-    visibility:visible;
+
+  .print-area, .print-area * {
+    visibility: visible;
   }
-  .order-box {
-    position:absolute;
-    left:0;
-    top:0;
-    width:100%;
+
+  .print-area {
+    position: absolute;
+    left: 0;
+    top: 0;
+    width: 80mm;     /* thermal printer safe */
+    padding: 10px;
+    font-size: 12px;
+  }
+
+  button, select {
+    display: none;
   }
 }
 </style>
@@ -94,6 +104,7 @@ select, button {
 
 <hr>
 
+<!-- ✅ SINGLE REPORT SECTION -->
 <h2>📊 Reports</h2>
 <button onclick="exportDailySummaryExcel()">📅 Day-wise Excel</button>
 <button onclick="exportMonthlyExcel()">📆 Monthly Excel</button>
@@ -108,9 +119,9 @@ document.addEventListener("DOMContentLoaded", function () {
 
   loadOrders();
 
-  /* =========================
-     LOAD & RENDER ORDERS
-  ========================= */
+  /* ===== AUTO REFRESH EVERY 10 SECONDS ===== */
+  setInterval(loadOrders, 10000);
+
   function loadOrders() {
     const orders = JSON.parse(localStorage.getItem(KITCHEN_KEY)) || [];
     ordersDiv.innerHTML = "";
@@ -145,7 +156,7 @@ document.addEventListener("DOMContentLoaded", function () {
       const grandTotal = subTotal + cgst + sgst;
 
       ordersDiv.innerHTML += `
-        <div class="order-box">
+        <div class="order-box print-area">
           <div class="table-title">Table ${order.table}</div>
 
           <div class="items">
@@ -169,7 +180,7 @@ document.addEventListener("DOMContentLoaded", function () {
             </div>
 
             <div>
-              <button class="print-btn" onclick="printBill()">Print Bill</button>
+              <button class="print-btn" onclick="printThis(this)">Print Bill</button>
               <button class="close-btn" onclick="closeBill('${order.table}')">
                 Close Bill
               </button>
@@ -180,9 +191,7 @@ document.addEventListener("DOMContentLoaded", function () {
     });
   }
 
-  /* =========================
-     SET PAYMENT METHOD
-  ========================= */
+  /* ===== PAYMENT ===== */
   window.setPayment = function (table, method) {
     const orders = JSON.parse(localStorage.getItem(KITCHEN_KEY)) || [];
     const order = orders.find(o => o.table === table && o.status === "Open");
@@ -192,9 +201,7 @@ document.addEventListener("DOMContentLoaded", function () {
     }
   };
 
-  /* =========================
-     CLOSE BILL
-  ========================= */
+  /* ===== CLOSE BILL ===== */
   window.closeBill = function (table) {
     const orders = JSON.parse(localStorage.getItem(KITCHEN_KEY)) || [];
     const index = orders.findIndex(o => o.table === table && o.status === "Open");
@@ -206,16 +213,23 @@ document.addEventListener("DOMContentLoaded", function () {
       return;
     }
 
-    orders.splice(index, 1); // remove closed order
+    orders.splice(index, 1);
     localStorage.setItem(KITCHEN_KEY, JSON.stringify(orders));
     loadOrders();
   };
 
-  /* =========================
-     PRINT BILL
-  ========================= */
-  window.printBill = function () {
+  /* ===== PRINT ONLY THIS ORDER ===== */
+  window.printThis = function (btn) {
+    const box = btn.closest(".order-box");
+    document.querySelectorAll(".order-box").forEach(b => {
+      if (b !== box) b.style.display = "none";
+    });
+
     window.print();
+
+    document.querySelectorAll(".order-box").forEach(b => {
+      b.style.display = "";
+    });
   };
 
 });
