@@ -90,6 +90,16 @@ function placeOrder() {
     headers: { "Content-Type": "application/json" },
     body: JSON.stringify({ table, items: cart })
   }).then(() => {
+    const QUEUE_KEY = "kitchen_queue";
+
+const queue = JSON.parse(localStorage.getItem(QUEUE_KEY)) || [];
+queue.push({
+  table,
+  items: cart,
+  time: new Date().toLocaleTimeString()
+});
+localStorage.setItem(QUEUE_KEY, JSON.stringify(queue));
+
     localStorage.removeItem("cart");
     cart = [];
     updateCartCount();
@@ -209,3 +219,4 @@ showCart();
 updateCartCount();
 loadOrders();
 setInterval(loadOrders, 10000);
+
