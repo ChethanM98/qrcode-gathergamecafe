@@ -316,7 +316,7 @@ for (const section in menuData) {
         <div class="price">${item.price}</div>
       </div>
       <div class="actions">
-        <button class="add-btn" onclick="addItem(this)">Add</button>
+        <button class="add-btn" onclick="addToCartFromUI(this)">Add</button>
         <div class="qty-control">
           <button onclick="updateQty(this,-1)">−</button>
           <span class="qty-value">1</span>
@@ -342,25 +342,6 @@ document.querySelectorAll(".tab-btn").forEach(btn => {
   };
 });
 
-let cart = [];
-
-function addItem(btn) {
-  const card = btn.closest(".menu-item");
-  btn.style.display = "none";
-  card.querySelector(".qty-control").style.display = "flex";
-
-  const name = card.querySelector("h3").innerText;
-  const price = parseInt(card.querySelector(".price").innerText.replace("",""));
-  cart.push({ name, price, qty: 1 });
-}
-
-function updateQty(btn, delta) {
-  const qtySpan = btn.parentElement.querySelector(".qty-value");
-  let qty = parseInt(qtySpan.innerText) + delta;
-  const card = btn.closest(".menu-item");
-  const addBtn = card.querySelector(".add-btn");
-  const name = card.querySelector("h3").innerText;
-
   if (qty <= 0) {
     btn.parentElement.style.display = "none";
     addBtn.style.display = "inline-block";
@@ -375,3 +356,4 @@ function updateQty(btn, delta) {
 
 </body>
 </html>
+
