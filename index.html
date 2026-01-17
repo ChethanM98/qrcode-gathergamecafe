@@ -167,10 +167,21 @@ h1 {
   background: #2f8c4c;
   transform: translateY(-2px);
 }
-
+.cart-count {
+  background: #ffffff;
+  color: #3fa55b;
+  margin-left: 8px;
+  padding: 2px 8px;
+  border-radius: 999px;
+  font-size: 14px;
+  font-weight: bold;
+}
 </style>
 </head>
-<a href="cart.html" class="cart-btn">🛒 Go to Cart</a>
+<a href="cart.html" class="cart-btn">
+  🛒 Go to Cart
+  <span id="cart-count" class="cart-count">0</span>
+</a>
 <body>
 
 <h1>🎲 Gather & Game Café Menu</h1>
@@ -364,3 +375,4 @@ function updateQty(btn, delta) {
 
 </body>
 </html>
+
