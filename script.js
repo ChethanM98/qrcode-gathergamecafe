@@ -1,44 +1,61 @@
-// ===== TABLE NUMBER =====
-const params = new URLSearchParams(window.location.search);
-if (params.get("table")) {
-  localStorage.setItem("tableNumber", params.get("table"));
+// ===== ADMIN SECURITY =====
+if (
+  location.pathname.includes("admin.html") &&
+  sessionStorage.getItem("admin") !== "yes"
+) {
+  location.href = "admin-login.html";
 }
-const tableNumber = localStorage.getItem("tableNumber") || "Unknown";
+
+// ===== TAX =====
+const CGST = 2.5;
+const SGST = 2.5;
+
+// ===== PAYMENT MEMORY =====
+const paymentSelection = {};
+
+// ===== TABLE =====
+const params = new URLSearchParams(location.search);
+if (params.get("table")) localStorage.setItem("table", params.get("table"));
+const table = localStorage.getItem("table") || "Unknown";
 
 // ===== CART =====
 let cart = JSON.parse(localStorage.getItem("cart")) || [];
 
-// ===== QUANTITY BUTTON =====
-function changeQty(button, delta) {
-  const span = button.parentElement.querySelector(".qty-value");
-  let qty = parseInt(span.innerText);
-  qty += delta;
+// ===== CART COUNT =====
+function updateCartCount() {
+  const countEl = document.getElementById("cart-count");
+  if (!countEl) return;
+
+  const totalQty = cart.reduce((sum, item) => sum + item.qty, 0);
+  countEl.innerText = totalQty;
+}
+
+// ===== QUANTITY (UI ONLY) =====
+function changeQty(btn, delta) {
+  const span = btn.parentElement.querySelector(".qty-value");
+  let qty = parseInt(span.innerText) + delta;
   if (qty < 1) qty = 1;
   span.innerText = qty;
 }
 
 // ===== ADD TO CART =====
-function addToCartFromUI(button, name, price) {
-  const qtySpan = button
-    .closest(".menu-item")
-    .querySelector(".qty-value");
+function addToCartFromUI(btn, name, price) {
+  const qty = parseInt(
+    btn.closest(".menu-item").querySelector(".qty-value").innerText
+  );
 
-  const qty = parseInt(qtySpan.innerText);
-
-  const existing = cart.find(i => i.name === name);
-  if (existing) {
-    existing.qty += qty;
+  const found = cart.find(i => i.name === name);
+  if (found) {
+    found.qty += qty;
   } else {
     cart.push({ name, price, qty });
   }
 
   localStorage.setItem("cart", JSON.stringify(cart));
-  alert(`${name} x${qty} added`);
-
-  qtySpan.innerText = 1;
+  updateCartCount();
 }
 
-// ===== SHOW CART =====
+// ===== SHOW CART (cart.html) =====
 function showCart() {
   const div = document.getElementById("cartItems");
   if (!div) return;
@@ -46,54 +63,149 @@ function showCart() {
   div.innerHTML = "";
   let total = 0;
 
-  cart.forEach(i => {
-    const itemTotal = i.price * i.qty;
-    total += itemTotal;
-    div.innerHTML += `<p>${i.name} x${i.qty} – ₹${itemTotal}</p>`;
+  cart.forEach(item => {
+    const lineTotal = item.price * item.qty;
+    total += lineTotal;
+
+    div.innerHTML += `
+      <p>
+        ${item.name} x${item.qty}
+        — ₹${lineTotal.toFixed(2)}
+      </p>
+    `;
   });
 
-  div.innerHTML += `<h3>Total: ₹${total}</h3>`;
+  div.innerHTML += `
+    <hr>
+    <h3>Total: ₹${total.toFixed(2)}</h3>
+  `;
+
+  updateCartCount();
 }
 
 // ===== PLACE ORDER =====
 function placeOrder() {
   fetch("/order", {
     method: "POST",
-    headers: {"Content-Type":"application/json"},
-    body: JSON.stringify({ table: tableNumber, items: cart })
-  })
-  .then(r => r.json())
-  .then(() => {
-    cart = [];
+    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify({ table, items: cart })
+  }).then(() => {
     localStorage.removeItem("cart");
-    showCart();
-    alert("Order placed!");
-    window.location.href = "index.html?table=" + tableNumber;
+    cart = [];
+    updateCartCount();
+    alert("Order placed successfully");
+    location.href = "index.html?table=" + table;
   });
 }
 
-// ===== KITCHEN =====
+// ===== ADMIN LOAD ORDERS (TABLE-WISE) =====
 function loadOrders() {
   fetch("/orders")
     .then(r => r.json())
-    .then(data => {
+    .then(rows => {
       const div = document.getElementById("orders");
       if (!div) return;
+
       div.innerHTML = "";
-      data.forEach(o => {
-        const box = document.createElement("div");
-        box.className = "order-box";
-        const items = JSON.parse(o.items)
-          .map(i => `${i.name} x${i.qty}`).join(", ");
-        box.innerHTML = `
-          <strong>Table ${o.table_no}</strong><br>
-          ${items}
+      const tableMap = {};
+
+      rows.forEach(r => {
+        if (!tableMap[r.table_no]) tableMap[r.table_no] = [];
+        tableMap[r.table_no].push(...JSON.parse(r.items));
+      });
+
+      Object.keys(tableMap).forEach(tableNo => {
+        const merged = {};
+        let subtotal = 0;
+
+        tableMap[tableNo].forEach(i => {
+          if (!merged[i.name]) merged[i.name] = { ...i };
+          else merged[i.name].qty += i.qty;
+        });
+
+        const lines = Object.values(merged)
+          .map(i => {
+            const t = i.price * i.qty;
+            subtotal += t;
+            return `${i.name} x${i.qty} – ₹${t}`;
+          })
+          .join("<br>");
+
+        const cgst = subtotal * 0.025;
+        const sgst = subtotal * 0.025;
+        const total = subtotal + cgst + sgst;
+
+        const selectedMode = paymentSelection[tableNo] || "Cash";
+
+        const selectHTML = `
+          <select id="pay-${tableNo}" onchange="savePayment('${tableNo}')">
+            <option value="Cash" ${selectedMode === "Cash" ? "selected" : ""}>Cash</option>
+            <option value="UPI" ${selectedMode === "UPI" ? "selected" : ""}>UPI</option>
+          </select>
         `;
-        div.appendChild(box);
+
+        div.innerHTML += `
+          <div class="table-box">
+            <div class="invoice">
+              <h3>Gather Game Café</h3>
+              GSTIN: 29ABCDE1234F1Z5<br>
+              Invoice: INV-${tableNo}<br>
+              Date: ${new Date().toLocaleDateString("en-IN")}<br>
+              Table: ${tableNo}<br><br>
+              ${lines}
+              <hr>
+              <div class="line"><span>Subtotal</span><span>₹${subtotal.toFixed(2)}</span></div>
+              <div class="line"><span>CGST 2.5%</span><span>₹${cgst.toFixed(2)}</span></div>
+              <div class="line"><span>SGST 2.5%</span><span>₹${sgst.toFixed(2)}</span></div>
+              <div class="line"><b>Total</b><b>₹${total.toFixed(2)}</b></div>
+            </div>
+
+            ${selectHTML}<br>
+            <button onclick="window.print()">Print Invoice</button>
+            <button onclick="closeTable('${tableNo}', ${total})">Close Bill</button>
+          </div>
+        `;
       });
     });
 }
 
+function savePayment(tableNo) {
+  paymentSelection[tableNo] =
+    document.getElementById(`pay-${tableNo}`).value;
+}
+
+function closeTable(tableNo, total) {
+  const mode = paymentSelection[tableNo] || "Cash";
+  fetch("/close-table", {
+    method: "POST",
+    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify({ table: tableNo, total, payment_mode: mode })
+  }).then(() => {
+    delete paymentSelection[tableNo];
+    loadOrders();
+  });
+}
+
+// ===== REPORTS =====
+function exportDailySummaryExcel() {
+  window.open("/export-daily-summary");
+}
+
+function exportMonthlyExcel() {
+  window.open("/export-monthly");
+}
+
+function loadMonthly() {
+  fetch("/monthly")
+    .then(r => r.json())
+    .then(d => {
+      document.getElementById("report").innerHTML =
+        d.map(m => `${m.month}: ₹${m.total}`).join("<br>");
+    });
+}
+
+// ===== INIT =====
 showCart();
-setInterval(loadOrders,2000);
+updateCartCount();
 loadOrders();
+setInterval(loadOrders, 10000);
