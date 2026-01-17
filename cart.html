@@ -2,76 +2,147 @@
 <html lang="en">
 <head>
 <meta charset="UTF-8">
-<title>Your Order</title>
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Cart – Gather & Game Café</title>
 
 <style>
 body {
   font-family: Arial, sans-serif;
-  background: #f4efe8;
+  background: #f6f1e7;
   padding: 20px;
-}
-
-.container {
-  max-width: 600px;
-  margin: auto;
-  background: #ffffff;
-  padding: 20px;
-  border-radius: 10px;
-  box-shadow: 0 4px 12px rgba(0,0,0,0.15);
 }
 
 h1 {
   text-align: center;
 }
 
-#cartItems p {
-  display: flex;
-  justify-content: space-between;
-  margin: 8px 0;
+.cart-container {
+  max-width: 700px;
+  margin: auto;
+  background: #fff;
+  padding: 20px;
+  border-radius: 12px;
+  box-shadow: 0 4px 12px rgba(0,0,0,0.15);
 }
 
-button {
-  width: 100%;
+.cart-item {
+  display: flex;
+  justify-content: space-between;
+  padding: 10px 0;
+  border-bottom: 1px solid #ddd;
+}
+
+.cart-item:last-child {
+  border-bottom: none;
+}
+
+.total {
+  font-size: 18px;
+  font-weight: bold;
+  text-align: right;
+  margin-top: 15px;
+}
+
+.empty {
+  text-align: center;
+  color: #666;
+}
+
+.actions {
+  display: flex;
+  justify-content: space-between;
   margin-top: 20px;
-  padding: 14px;
-  font-size: 16px;
-  background: #3fa55b;
-  color: white;
-  border: none;
+}
+
+button, a {
+  padding: 12px 18px;
   border-radius: 999px;
+  border: none;
+  text-decoration: none;
+  font-weight: bold;
   cursor: pointer;
 }
 
-button:hover {
-  background: #2f8c4c;
+.back-btn {
+  background: #7b4b2a;
+  color: #fff;
 }
 
-.back-link {
-  display: block;
-  text-align: center;
-  margin-top: 15px;
-  text-decoration: none;
-  color: #7b4b2a;
-  font-weight: bold;
+.checkout-btn {
+  background: #3fa55b;
+  color: #fff;
 }
 </style>
 </head>
 
 <body>
 
-<div class="container">
-  <h1>Your Order</h1>
+<h1>🛒 Your Cart</h1>
 
-  <!-- Cart Items -->
-  <div id="cartItems"></div>
+<div class="cart-container">
+  <div id="table-info"></div>
+  <div id="cart-items"></div>
+  <div id="total" class="total"></div>
 
-  <!-- Place Order -->
-  <button onclick="placeOrder()">Place Order</button>
-
-  <!-- Back to Menu -->
-  <a href="index.html" class="back-link">← Back to Menu</a>
+  <div class="actions">
+    <a id="backBtn" class="back-btn">⬅ Back to Menu</a>
+    <button class="checkout-btn">Proceed to Pay</button>
+  </div>
 </div>
 
-<script src="script.js"></script>
+<script>
+document.addEventListener("DOMContentLoaded", function () {
+
+  /* ================================
+     1. GET TABLE NUMBER
+  ================================= */
+  const params = new URLSearchParams(window.location.search);
+  const tableNo = params.get("table") || "default";
+  const CART_KEY = `cart_table_${tableNo}`;
+
+  document.getElementById("table-info").innerHTML =
+    `<strong>Table No:</strong> ${tableNo}`;
+
+  /* ================================
+     2. LOAD CART
+  ================================= */
+  const cart = JSON.parse(localStorage.getItem(CART_KEY)) || {};
+  const cartItemsDiv = document.getElementById("cart-items");
+  const totalDiv = document.getElementById("total");
+
+  let total = 0;
+
+  if (Object.keys(cart).length === 0) {
+    cartItemsDiv.innerHTML = `<p class="empty">Your cart is empty</p>`;
+    totalDiv.innerText = "";
+  } else {
+    for (const name in cart) {
+      const item = cart[name];
+      const itemTotal = item.price * item.qty;
+      total += itemTotal;
+
+      cartItemsDiv.innerHTML += `
+        <div class="cart-item">
+          <div>
+            <strong>${name}</strong><br>
+            ₹${item.price} × ${item.qty}
+          </div>
+          <div>₹${itemTotal}</div>
+        </div>
+      `;
+    }
+
+    totalDiv.innerText = `Total: ₹${total}`;
+  }
+
+  /* ================================
+     3. BACK TO MENU (TABLE SAFE)
+  ================================= */
+  document.getElementById("backBtn").href =
+    `menu.html?table=${tableNo}`;
+
+});
+</script>
+
 </body>
 </html>
