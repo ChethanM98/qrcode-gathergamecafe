@@ -4,7 +4,7 @@
 <meta charset="UTF-8">
 <title>Reports</title>
 
-<!-- 🔐 AUTH PROTECTION -->
+<!-- 🔐 AUTH -->
 <script>
 (function () {
   const auth = localStorage.getItem("admin_auth");
@@ -20,7 +20,7 @@
 
 <style>
 body {
-  font-family: Arial, sans-serif;
+  font-family: Arial;
   background:#f6f1e7;
   padding:20px;
 }
@@ -30,75 +30,44 @@ body {
   margin:auto;
 }
 
-h1 {
-  text-align:center;
-}
-
-.filter {
-  background:#fff;
-  padding:15px;
-  border-radius:10px;
-  margin-bottom:20px;
-  display:flex;
-  gap:10px;
-  align-items:center;
-}
-
-.filter input {
-  padding:8px;
-  font-size:14px;
-}
-
-.filter button {
+button {
   padding:10px 14px;
-  background:#3fa55b;
-  color:#fff;
+  margin:6px 0;
   border:none;
   border-radius:999px;
+  background:#3fa55b;
+  color:#fff;
   cursor:pointer;
 }
 
-.bill {
+.block {
   background:#fff;
   padding:16px;
   border-radius:10px;
-  margin-bottom:16px;
-  box-shadow:0 3px 8px rgba(0,0,0,0.15);
+  margin-top:16px;
 }
 
-.bill h3 {
-  margin:0 0 6px 0;
+.bill {
+  border-bottom:1px dashed #ccc;
+  padding:10px 0;
 }
 
-.items {
-  margin:10px 0;
-}
-
-.item-row {
+.item {
   display:flex;
   justify-content:space-between;
   font-size:14px;
-  margin:4px 0;
 }
 
 .total {
-  text-align:right;
   font-weight:bold;
-  margin-top:8px;
+  text-align:right;
+  margin-top:6px;
 }
 
 .summary {
-  background:#fff;
-  padding:16px;
-  border-radius:10px;
-  margin-top:20px;
   font-size:16px;
   font-weight:bold;
-}
-
-.logout {
-  margin-top:20px;
-  background:#7b4b2a;
+  margin-top:10px;
 }
 </style>
 </head>
@@ -106,90 +75,132 @@ h1 {
 <body>
 
 <div class="container">
-  <h1>📊 Sales Reports</h1>
+  <h1>📊 Reports</h1>
 
-  <!-- 🔍 DATE FILTER -->
-  <div class="filter">
-    <label>From</label>
-    <input type="date" id="from">
-    <label>To</label>
-    <input type="date" id="to">
-    <button onclick="loadReports()">Apply</button>
+  <!-- ===== QUICK REPORTS ===== -->
+  <div class="block">
+    <button onclick="dailyReport()">📅 Daily Report</button>
+    <button onclick="monthlyReport()">📆 Monthly Report</button>
+    <button onclick="monthlySummary()">📊 Monthly Summary</button>
+    <div id="quickReport"></div>
   </div>
 
-  <!-- 📄 REPORT BLOCK -->
-  <div id="reports"></div>
+  <!-- ===== DATE FILTER ===== -->
+  <div class="block">
+    <h3>🔍 Date Filter</h3>
+    From <input type="date" id="from">
+    To <input type="date" id="to">
+    <button onclick="dateFilter()">Apply</button>
+  </div>
 
-  <!-- 📌 SUMMARY -->
-  <div id="summary" class="summary" style="display:none"></div>
+  <!-- ===== DETAILED REPORTS ===== -->
+  <div class="block" id="detailed"></div>
 
-  <button class="logout" onclick="logout()">Logout</button>
+  <!-- ===== TOTAL SUMMARY ===== -->
+  <div class="block summary" id="grandTotal"></div>
+
+  <button onclick="logout()">Logout</button>
 </div>
 
 <script>
 const CLOSED_KEY = "closed_bills";
 
-function loadReports() {
-  const from = document.getElementById("from").value;
-  const to = document.getElementById("to").value;
-
+/* ===== DAILY ===== */
+function dailyReport() {
+  const today = new Date().toDateString();
   const bills = JSON.parse(localStorage.getItem(CLOSED_KEY)) || [];
-  const reportsDiv = document.getElementById("reports");
-  const summaryDiv = document.getElementById("summary");
+  let total = 0;
 
-  reportsDiv.innerHTML = "";
-  summaryDiv.style.display = "none";
+  bills.filter(b => new Date(b.time).toDateString() === today)
+    .forEach(b => total += b.total);
 
-  if (!from || !to) {
-    alert("Select both From and To dates");
-    return;
-  }
-
-  const fromDate = new Date(from);
-  const toDate = new Date(to);
-  toDate.setHours(23,59,59,999);
-
-  let grandTotal = 0;
-
-  bills
-    .filter(b => {
-      const d = new Date(b.time);
-      return d >= fromDate && d <= toDate;
-    })
-    .forEach(bill => {
-
-      let itemsHTML = "";
-      for (const k in bill.items) {
-        const i = bill.items[k];
-        itemsHTML += `
-          <div class="item-row">
-            <span>${i.name} × ${i.qty}</span>
-            <span>₹${i.price * i.qty}</span>
-          </div>
-        `;
-      }
-
-      grandTotal += bill.total;
-
-      reportsDiv.innerHTML += `
-        <div class="bill">
-          <h3>Table ${bill.table}</h3>
-          <div>🕒 ${new Date(bill.time).toLocaleString()}</div>
-          <div class="items">${itemsHTML}</div>
-          <div class="total">Bill Total: ₹${bill.total.toFixed(2)}</div>
-        </div>
-      `;
-    });
-
-  if (reportsDiv.innerHTML === "") {
-    reportsDiv.innerHTML = "<p>No records found</p>";
-    return;
-  }
-
-  summaryDiv.style.display = "block";
-  summaryDiv.innerText = `Grand Total: ₹${grandTotal.toFixed(2)}`;
+  document.getElementById("quickReport").innerHTML =
+    `Today’s Total: ₹${total.toFixed(2)}`;
 }
 
+/* ===== MONTHLY ===== */
+function monthlyReport() {
+  const m = new Date().getMonth();
+  const y = new Date().getFullYear();
+  const bills = JSON.parse(localStorage.getItem(CLOSED_KEY)) || [];
+  let total = 0;
+
+  bills.filter(b => {
+    const d = new Date(b.time);
+    return d.getMonth() === m && d.getFullYear() === y;
+  }).forEach(b => total += b.total);
+
+  document.getElementById("quickReport").innerHTML =
+    `This Month Total: ₹${total.toFixed(2)}`;
+}
+
+/* ===== MONTHLY SUMMARY (DAY-WISE) ===== */
+function monthlySummary() {
+  const m = new Date().getMonth();
+  const y = new Date().getFullYear();
+  const bills = JSON.parse(localStorage.getItem(CLOSED_KEY)) || {};
+  const map = {};
+
+  bills.forEach(b => {
+    const d = new Date(b.time);
+    if (d.getMonth() === m && d.getFullYear() === y) {
+      const day = d.toDateString();
+      map[day] = (map[day] || 0) + b.total;
+    }
+  });
+
+  let html = "<h4>Day-wise Summary</h4>";
+  for (const day in map) {
+    html += `<div>${day} : ₹${map[day].toFixed(2)}</div>`;
+  }
+
+  document.getElementById("quickReport").innerHTML = html;
+}
+
+/* ===== DATE FILTER (DETAILED) ===== */
+function dateFilter() {
+  const from = new Date(document.getElementById("from").value);
+  const to = new Date(document.getElementById("to").value);
+  to.setHours(23,59,59,999);
+
+  const bills = JSON.parse(localStorage.getItem(CLOSED_KEY)) || [];
+  const div = document.getElementById("detailed");
+  const totalDiv = document.getElementById("grandTotal");
+
+  div.innerHTML = "";
+  totalDiv.innerHTML = "";
+  let grand = 0;
+
+  bills.filter(b => {
+    const d = new Date(b.time);
+    return d >= from && d <= to;
+  }).forEach(b => {
+
+    let itemsHTML = "";
+    for (const k in b.items) {
+      const i = b.items[k];
+      itemsHTML += `
+        <div class="item">
+          <span>${i.name} × ${i.qty}</span>
+          <span>₹${i.price * i.qty}</span>
+        </div>`;
+    }
+
+    grand += b.total;
+
+    div.innerHTML += `
+      <div class="bill">
+        <b>Table ${b.table}</b>
+        ${itemsHTML}
+        <div class="total">₹${b.total.toFixed(2)}</div>
+      </div>
+    `;
+  });
+
+  totalDiv.innerHTML = `Grand Total: ₹${grand.toFixed(2)}`;
+}
+
+/* ===== LOGOUT ===== */
 function logout() {
   localStorage.removeItem("admin_auth");
   localStorage.removeItem("admin_auth_time");
