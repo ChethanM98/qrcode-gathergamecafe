@@ -57,12 +57,11 @@ body {
 <div id="menu"></div>
 
 <script>
+<script>
 const menuData = [
   { name: "Masala Chai", price: 49 },
   { name: "Coffee", price: 59 }
 ];
-
-let cart = JSON.parse(localStorage.getItem("cart")) || [];
 
 const menu = document.getElementById("menu");
 
@@ -72,30 +71,40 @@ menu.innerHTML = menuData.map(item => `
       <strong>${item.name}</strong><br>
       ₹${item.price}
     </div>
-    <button class="add-btn" onclick="addItem('${item.name}', ${item.price})">
-      Add
-    </button>
+
+    <div class="actions">
+      <button class="add-btn" onclick="showQty(this)">Add</button>
+
+      <div class="qty-control">
+        <button onclick="changeQty(this, -1)">−</button>
+        <span class="qty-value">1</span>
+        <button onclick="changeQty(this, 1)">+</button>
+      </div>
+    </div>
   </div>
 `).join("");
 
-function addItem(name, price) {
-  const found = cart.find(i => i.name === name);
-  if (found) {
-    found.qty += 1;
+function showQty(btn) {
+  const actions = btn.parentElement;
+  btn.style.display = "none";
+  actions.querySelector(".qty-control").style.display = "flex";
+}
+
+function changeQty(btn, delta) {
+  const qtySpan = btn.parentElement.querySelector(".qty-value");
+  let qty = parseInt(qtySpan.innerText) + delta;
+
+  if (qty <= 0) {
+    // Hide qty, show Add again
+    btn.parentElement.style.display = "none";
+    btn.closest(".actions").querySelector(".add-btn").style.display = "inline-block";
+    qtySpan.innerText = 1;
   } else {
-    cart.push({ name, price, qty: 1 });
+    qtySpan.innerText = qty;
   }
-  localStorage.setItem("cart", JSON.stringify(cart));
-  updateCartCount();
 }
-
-function updateCartCount() {
-  document.getElementById("cart-count").innerText =
-    cart.reduce((s, i) => s + i.qty, 0);
-}
-
-updateCartCount();
 </script>
 
 </body>
 </html>
+
