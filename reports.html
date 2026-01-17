@@ -1,0 +1,77 @@
+<!DOCTYPE html>
+<html>
+<head>
+<title>Reports</title>
+
+<style>
+body { font-family: Arial; background:#f6f1e7; padding:20px; }
+.box { background:#fff; padding:20px; border-radius:10px; max-width:700px; margin:auto; }
+button { margin:6px 0; padding:10px; width:100%; }
+</style>
+</head>
+
+<body>
+
+<div class="box">
+  <h1>📊 Reports</h1>
+
+  <button onclick="daily()">📅 Daily Excel</button>
+  <button onclick="monthly()">📆 Monthly Excel</button>
+  <button onclick="screen()">📊 Monthly Summary (Screen)</button>
+
+  <div id="out"></div>
+</div>
+
+<script>
+const CLOSED_KEY = "closed_bills";
+const out = document.getElementById("out");
+
+function csv(name, rows) {
+  const blob = new Blob([rows.map(r=>r.join(",")).join("\n")], {type:"text/csv"});
+  const a = document.createElement("a");
+  a.href = URL.createObjectURL(blob);
+  a.download = name;
+  a.click();
+}
+
+function daily() {
+  const bills = JSON.parse(localStorage.getItem(CLOSED_KEY)) || [];
+  const map = {};
+  bills.forEach(b => {
+    if (!map[b.date]) map[b.date] = { Cash:0, UPI:0, Total:0 };
+    map[b.date][b.payment] += b.grandTotal;
+    map[b.date].Total += b.grandTotal;
+  });
+
+  const rows = [["Date","Cash","UPI","Total"]];
+  for (const d in map) rows.push([d, map[d].Cash, map[d].UPI, map[d].Total]);
+  csv("daily_report.csv", rows);
+}
+
+function monthly() {
+  const bills = JSON.parse(localStorage.getItem(CLOSED_KEY)) || [];
+  const map = {};
+  bills.forEach(b => {
+    if (!map[b.month]) map[b.month] = { Cash:0, UPI:0, Total:0 };
+    map[b.month][b.payment] += b.grandTotal;
+    map[b.month].Total += b.grandTotal;
+  });
+
+  const rows = [["Month","Cash","UPI","Total"]];
+  for (const m in map) rows.push([m, map[m].Cash, map[m].UPI, map[m].Total]);
+  csv("monthly_report.csv", rows);
+}
+
+function screen() {
+  const bills = JSON.parse(localStorage.getItem(CLOSED_KEY)) || [];
+  const map = {};
+  bills.forEach(b => map[b.month] = (map[b.month] || 0) + b.grandTotal);
+
+  out.innerHTML = "<h3>Monthly Summary</h3>";
+  for (const m in map)
+    out.innerHTML += `<p>${m}: ₹${map[m].toFixed(2)}</p>`;
+}
+</script>
+
+</body>
+</html>
