@@ -51,26 +51,16 @@ select, button { padding:8px 12px; font-size:14px; }
 <h1>🍽️ Kitchen & Billing</h1>
 <div id="orders"></div>
 
-<hr>
-
-<h2>📊 Reports</h2>
-<button onclick="exportDailySummaryExcel()">📅 Day-wise Excel</button>
-<button onclick="exportMonthlyExcel()">📆 Monthly Excel</button>
-<button onclick="loadMonthly()">📊 Monthly Summary (Screen)</button>
-<div id="report"></div>
-
 <script>
-document.addEventListener("DOMContentLoaded", function () {
+document.addEventListener("DOMContentLoaded", () => {
 
   const KITCHEN_KEY = "kitchen_orders";
   const CLOSED_KEY = "closed_bills";
   const ordersDiv = document.getElementById("orders");
-  const reportDiv = document.getElementById("report");
 
   loadOrders();
-  setInterval(loadOrders, 10000);
+  setInterval(loadOrders, 10000); // auto-refresh
 
-  /* ================= OPEN ORDERS ================= */
   function loadOrders() {
     const orders = JSON.parse(localStorage.getItem(KITCHEN_KEY)) || [];
     ordersDiv.innerHTML = "";
@@ -81,21 +71,19 @@ document.addEventListener("DOMContentLoaded", function () {
     }
 
     orders.forEach(order => {
-
       let itemsHTML = "";
       let subTotal = 0;
 
       for (const k in order.items) {
-        const it = order.items[k];
-        const line = it.price * it.qty;
+        const i = order.items[k];
+        const line = i.price * i.qty;
         subTotal += line;
 
         itemsHTML += `
           <div class="item-row">
-            <span>${it.name} × ${it.qty}</span>
+            <span>${i.name} × ${i.qty}</span>
             <span>₹${line.toFixed(2)}</span>
-          </div>
-        `;
+          </div>`;
       }
 
       const cgst = subTotal * 0.025;
@@ -110,21 +98,18 @@ document.addEventListener("DOMContentLoaded", function () {
             ${itemsHTML}
             <div class="total">
               Subtotal: ₹${subTotal.toFixed(2)}<br>
-              CGST (2.5%): ₹${cgst.toFixed(2)}<br>
-              SGST (2.5%): ₹${sgst.toFixed(2)}<br>
+              CGST: ₹${cgst.toFixed(2)}<br>
+              SGST: ₹${sgst.toFixed(2)}<br>
               <strong>Grand Total: ₹${grand.toFixed(2)}</strong>
             </div>
           </div>
 
           <div class="actions">
-            <div>
-              Payment:
-              <select onchange="setPayment('${order.table}', this.value)">
-                <option value="">Select</option>
-                <option value="Cash" ${order.payment==="Cash"?"selected":""}>Cash</option>
-                <option value="UPI" ${order.payment==="UPI"?"selected":""}>UPI</option>
-              </select>
-            </div>
+            <select onchange="setPayment('${order.table}', this.value)">
+              <option value="">Payment</option>
+              <option value="Cash" ${order.payment==="Cash"?"selected":""}>Cash</option>
+              <option value="UPI" ${order.payment==="UPI"?"selected":""}>UPI</option>
+            </select>
 
             <div>
               <button class="print-btn" onclick="printThis(this)">Print</button>
@@ -134,12 +119,11 @@ document.addEventListener("DOMContentLoaded", function () {
               </button>
             </div>
           </div>
-        </div>
-      `;
+        </div>`;
     });
   }
 
-  window.setPayment = function (table, method) {
+  window.setPayment = (table, method) => {
     const orders = JSON.parse(localStorage.getItem(KITCHEN_KEY)) || [];
     const o = orders.find(x => x.table === table);
     if (o) {
@@ -148,107 +132,33 @@ document.addEventListener("DOMContentLoaded", function () {
     }
   };
 
-  /* ================= CLOSE BILL ================= */
-  window.closeBill = function (table, sub, cgst, sgst, grand) {
-
+  window.closeBill = (table, sub, cgst, sgst, grand) => {
     let orders = JSON.parse(localStorage.getItem(KITCHEN_KEY)) || [];
     let closed = JSON.parse(localStorage.getItem(CLOSED_KEY)) || [];
 
     const idx = orders.findIndex(o => o.table === table);
     if (idx === -1) return;
-
-    if (!orders[idx].payment) {
-      alert("Select payment method");
-      return;
-    }
+    if (!orders[idx].payment) return alert("Select payment method");
 
     const now = new Date();
-    const date = now.toISOString().slice(0,10);
-    const month = now.toISOString().slice(0,7);
-
     closed.push({
       table,
       items: orders[idx].items,
       subTotal: sub,
-      cgst,
-      sgst,
+      cgst, sgst,
       grandTotal: grand,
       payment: orders[idx].payment,
-      date,
-      month
+      date: now.toISOString().slice(0,10),
+      month: now.toISOString().slice(0,7)
     });
 
     orders.splice(idx, 1);
-
     localStorage.setItem(KITCHEN_KEY, JSON.stringify(orders));
     localStorage.setItem(CLOSED_KEY, JSON.stringify(closed));
-
     loadOrders();
   };
 
-  /* ================= REPORTS ================= */
-
-  function downloadCSV(filename, rows) {
-    const csv = rows.map(r => r.join(",")).join("\n");
-    const blob = new Blob([csv], { type: "text/csv" });
-    const a = document.createElement("a");
-    a.href = URL.createObjectURL(blob);
-    a.download = filename;
-    a.click();
-  }
-
-  window.exportDailySummaryExcel = function () {
-    const bills = JSON.parse(localStorage.getItem(CLOSED_KEY)) || {};
-    const map = {};
-
-    bills.forEach(b => {
-      if (!map[b.date]) map[b.date] = { cash:0, upi:0, total:0 };
-      map[b.date][b.payment.toLowerCase()] += b.grandTotal;
-      map[b.date].total += b.grandTotal;
-    });
-
-    const rows = [["Date","Cash","UPI","Total"]];
-    for (const d in map) {
-      rows.push([d, map[d].cash, map[d].upi, map[d].total]);
-    }
-
-    downloadCSV("daily_report.csv", rows);
-  };
-
-  window.exportMonthlyExcel = function () {
-    const bills = JSON.parse(localStorage.getItem(CLOSED_KEY)) || {};
-    const map = {};
-
-    bills.forEach(b => {
-      if (!map[b.month]) map[b.month] = { cash:0, upi:0, total:0 };
-      map[b.month][b.payment.toLowerCase()] += b.grandTotal;
-      map[b.month].total += b.grandTotal;
-    });
-
-    const rows = [["Month","Cash","UPI","Total"]];
-    for (const m in map) {
-      rows.push([m, map[m].cash, map[m].upi, map[m].total]);
-    }
-
-    downloadCSV("monthly_report.csv", rows);
-  };
-
-  window.loadMonthly = function () {
-    const bills = JSON.parse(localStorage.getItem(CLOSED_KEY)) || [];
-    const map = {};
-
-    bills.forEach(b => {
-      if (!map[b.month]) map[b.month] = 0;
-      map[b.month] += b.grandTotal;
-    });
-
-    reportDiv.innerHTML = "<h3>Monthly Summary</h3>";
-    for (const m in map) {
-      reportDiv.innerHTML += `<p>${m} : ₹${map[m].toFixed(2)}</p>`;
-    }
-  };
-
-  window.printThis = function (btn) {
+  window.printThis = btn => {
     const box = btn.closest(".order-box");
     document.querySelectorAll(".order-box").forEach(b => {
       if (b !== box) b.style.display = "none";
@@ -262,4 +172,3 @@ document.addEventListener("DOMContentLoaded", function () {
 
 </body>
 </html>
-
