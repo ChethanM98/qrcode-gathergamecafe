@@ -10,40 +10,33 @@ body {
   background: #f4efe8;
   padding: 20px;
 }
-
 .container {
   max-width: 600px;
   margin: auto;
-  background: #ffffff;
+  background: #fff;
   padding: 20px;
   border-radius: 10px;
-  box-shadow: 0 4px 12px rgba(0,0,0,0.15);
 }
-
 #cartItems p {
   display: flex;
   justify-content: space-between;
-  margin: 8px 0;
 }
-
 button {
   width: 100%;
   margin-top: 20px;
   padding: 14px;
-  font-size: 16px;
   background: #3fa55b;
-  color: white;
+  color: #fff;
   border: none;
   border-radius: 999px;
-  cursor: pointer;
+  font-size: 16px;
 }
-
 .back-link {
   display: block;
-  text-align: center;
   margin-top: 15px;
-  text-decoration: none;
+  text-align: center;
   color: #7b4b2a;
+  text-decoration: none;
   font-weight: bold;
 }
 </style>
@@ -53,21 +46,14 @@ button {
 
 <div class="container">
   <h1>Your Order</h1>
-
-  <!-- Cart Items -->
   <div id="cartItems"></div>
 
-  <!-- Place Order -->
   <button onclick="placeOrder()">Place Order</button>
 
-  <!-- Back to Menu -->
   <a href="index.html" class="back-link">← Back to Menu</a>
 </div>
 
-<!-- ✅ Load logic -->
 <script src="script.js"></script>
-
-<!-- ✅ Auto-render cart (NO extra body) -->
 <script>
   document.addEventListener("DOMContentLoaded", showCart);
 </script>
