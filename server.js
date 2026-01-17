@@ -30,15 +30,15 @@ app.post("/order",(r,s)=>{
 });
 
 // GROUP BY TABLE
-app.get("/orders",(r,s)=>{
-  db.all("SELECT table_no, GROUP_CONCAT(items) items FROM orders GROUP BY table_no",
-    (e,rows)=>{
-      rows.forEach(r=>{
-        r.items = "[" + r.items.replace(/},{/g,"},{") + "]";
-      });
-      s.json(rows);
-    });
+app.get("/orders", (req, res) => {
+  db.all(
+    "SELECT id, table_no, items FROM orders ORDER BY id ASC",
+    (err, rows) => {
+      res.json(rows || []);
+    }
+  );
 });
+
 
 app.post("/close-table",(r,s)=>{
   db.run("INSERT INTO sales VALUES(NULL,?,?,?,date('now'))",
@@ -69,3 +69,4 @@ app.get("/monthly",(r,s)=>{
 });
 
 app.listen(3000,()=>console.log("Server running on 3000"));
+
