@@ -145,36 +145,48 @@ document.addEventListener("DOMContentLoaded", function () {
   /* =========================
      PLACE ORDER → KITCHEN
   ========================= */
-  window.placeOrder = function () {
+ window.placeOrder = function () {
 
-    const kitchenOrders =
-      JSON.parse(localStorage.getItem(KITCHEN_KEY)) || [];
+  const kitchenOrders =
+    JSON.parse(localStorage.getItem("kitchen_orders")) || [];
 
+  // Check if table already has an OPEN order
+  const existingOrder = kitchenOrders.find(
+    o => o.table === table && o.status === "Open"
+  );
+
+  if (existingOrder) {
+    // Append items
+    for (const name in cart) {
+      if (existingOrder.items[name]) {
+        existingOrder.items[name].qty += cart[name].qty;
+      } else {
+        existingOrder.items[name] = cart[name];
+      }
+    }
+  } else {
+    // Create new order
     kitchenOrders.push({
       table: table,
       items: cart,
-      total: total,
-      time: new Date().toLocaleString(),
-      status: "New"
+      payment: "",
+      status: "Open",
+      time: new Date().toLocaleString()
     });
+  }
 
-    // Save kitchen orders
-    localStorage.setItem(
-      KITCHEN_KEY,
-      JSON.stringify(kitchenOrders)
-    );
+  localStorage.setItem("kitchen_orders", JSON.stringify(kitchenOrders));
 
-    // Clear only this table cart
-    localStorage.removeItem(CART_KEY);
+  // Clear only table cart
+  localStorage.removeItem(CART_KEY);
 
-    alert("Order placed successfully!");
-
-    // Redirect back to menu
-    window.location.href = `index.html?table=${table}`;
-  };
+  alert("Order sent to kitchen!");
+  window.location.href = `index.html?table=${table}`;
+};
 
 });
 </script>
 
 </body>
 </html>
+
