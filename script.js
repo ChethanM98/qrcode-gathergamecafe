@@ -130,4 +130,5 @@ function loadMonthly(){
 
 showCart();
 loadOrders();
-setInterval(loadOrders,3000);
+setInterval(loadOrders,15000);
+
