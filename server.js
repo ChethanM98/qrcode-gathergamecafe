@@ -1,99 +1,37 @@
-// ===== TABLE NUMBER =====
-const params = new URLSearchParams(window.location.search);
-if (params.get("table")) {
-  localStorage.setItem("tableNumber", params.get("table"));
-}
-const tableNumber = localStorage.getItem("tableNumber") || "Unknown";
+const express = require("express");
+const sqlite3 = require("sqlite3").verbose();
+const path = require("path");
 
-// ===== CART =====
-let cart = JSON.parse(localStorage.getItem("cart")) || [];
+const app = express();
+const PORT = process.env.PORT || 3000;
 
-// ===== QUANTITY BUTTON =====
-function changeQty(button, delta) {
-  const span = button.parentElement.querySelector(".qty-value");
-  let qty = parseInt(span.innerText);
-  qty += delta;
-  if (qty < 1) qty = 1;
-  span.innerText = qty;
-}
+app.use(express.json());
+app.use(express.static(path.join(__dirname)));
 
-// ===== ADD TO CART =====
-function addToCartFromUI(button, name, price) {
-  const qtySpan = button
-    .closest(".menu-item")
-    .querySelector(".qty-value");
+const db = new sqlite3.Database("orders.db");
 
-  const qty = parseInt(qtySpan.innerText);
+db.run(`
+CREATE TABLE IF NOT EXISTS orders (
+  id INTEGER PRIMARY KEY AUTOINCREMENT,
+  table_no TEXT,
+  items TEXT,
+  created_at DATETIME DEFAULT CURRENT_TIMESTAMP
+)`);
 
-  const existing = cart.find(i => i.name === name);
-  if (existing) {
-    existing.qty += qty;
-  } else {
-    cart.push({ name, price, qty });
-  }
+app.post("/order", (req,res) => {
+  db.run(
+    "INSERT INTO orders (table_no, items) VALUES (?,?)",
+    [req.body.table, JSON.stringify(req.body.items)],
+    () => res.json({success:true})
+  );
+});
 
-  localStorage.setItem("cart", JSON.stringify(cart));
-  alert(`${name} x${qty} added`);
+app.get("/orders", (req,res) => {
+  db.all("SELECT * FROM orders ORDER BY id DESC", (e,r)=>res.json(r));
+});
 
-  qtySpan.innerText = 1;
-}
+app.get("/", (req,res)=>{
+  res.sendFile(path.join(__dirname,"index.html"));
+});
 
-// ===== SHOW CART =====
-function showCart() {
-  const div = document.getElementById("cartItems");
-  if (!div) return;
-
-  div.innerHTML = "";
-  let total = 0;
-
-  cart.forEach(i => {
-    const itemTotal = i.price * i.qty;
-    total += itemTotal;
-    div.innerHTML += `<p>${i.name} x${i.qty} – ₹${itemTotal}</p>`;
-  });
-
-  div.innerHTML += `<h3>Total: ₹${total}</h3>`;
-}
-
-// ===== PLACE ORDER =====
-function placeOrder() {
-  fetch("/order", {
-    method: "POST",
-    headers: {"Content-Type":"application/json"},
-    body: JSON.stringify({ table: tableNumber, items: cart })
-  })
-  .then(r => r.json())
-  .then(() => {
-    cart = [];
-    localStorage.removeItem("cart");
-    showCart();
-    alert("Order placed!");
-    window.location.href = "index.html?table=" + tableNumber;
-  });
-}
-
-// ===== KITCHEN =====
-function loadOrders() {
-  fetch("/orders")
-    .then(r => r.json())
-    .then(data => {
-      const div = document.getElementById("orders");
-      if (!div) return;
-      div.innerHTML = "";
-      data.forEach(o => {
-        const box = document.createElement("div");
-        box.className = "order-box";
-        const items = JSON.parse(o.items)
-          .map(i => `${i.name} x${i.qty}`).join(", ");
-        box.innerHTML = `
-          <strong>Table ${o.table_no}</strong><br>
-          ${items}
-        `;
-        div.appendChild(box);
-      });
-    });
-}
-
-showCart();
-setInterval(loadOrders,2000);
-loadOrders();
+app.listen(PORT, ()=>console.log("Server running on",PORT));
