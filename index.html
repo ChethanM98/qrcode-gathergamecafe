@@ -3,72 +3,104 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>Gather & Game Café – Menu</title>
+<title>Menu</title>
 
 <style>
-body {
-  font-family: Arial, sans-serif;
-  background: #f6f1e7;
-  padding: 20px;
-  margin: 0;
-}
+body { font-family: Arial; background:#f6f1e7; padding:20px; }
+.menu-item { background:#fff; padding:15px; margin-bottom:10px; border-radius:8px; display:flex; justify-content:space-between; }
+.add-btn { background:#3fa55b; color:#fff; border:none; padding:8px 14px; border-radius:20px; cursor:pointer; }
+.qty { display:none; gap:8px; }
+.qty button { width:28px; height:28px; border-radius:50%; border:none; background:#7b4b2a; color:#fff; }
+.cart-btn { position:fixed; bottom:20px; right:20px; background:#3fa55b; color:#fff; padding:12px 18px; border-radius:999px; text-decoration:none; }
+</style>
+</head>
 
-h1 {
-  text-align: center;
-}
+<body>
 
-.menu-item {
-  background: #fff;
-  padding: 15px;
-  margin-bottom: 12px;
-  border-radius: 10px;
-  display: flex;
-  justify-content: space-between;
-  align-items: center;
-}
+<a id="cartLink" class="cart-btn">
+  🛒 Cart <span id="cart-count">0</span>
+</a>
 
-.actions {
-  display: flex;
-  align-items: center;
-  gap: 10px;
-}
+<h2 id="tableInfo"></h2>
+<div id="menu"></div>
 
-.add-btn {
-  background: #3fa55b;
-  color: #fff;
-  border: none;
-  padding: 8px 16px;
-  border-radius: 20px;
-  cursor: pointer;
-}
+<script>
+document.addEventListener("DOMContentLoaded", () => {
 
-.qty-control {
-  display: none;
-  align-items: center;
-  gap: 10px;
-}
+  /* TABLE */
+  const params = new URLSearchParams(location.search);
+  const table = params.get("table") || "1";
+  const CART_KEY = `cart_table_${table}`;
 
-.qty-control button {
-  width: 28px;
-  height: 28px;
-  border-radius: 50%;
-  border: none;
-  background: #7b4b2a;
-  color: #fff;
-  font-size: 18px;
-  cursor: pointer;
-}
+  document.getElementById("tableInfo").innerText = "Table " + table;
+  document.getElementById("cartLink").href = `cart.html?table=${table}`;
 
-.cart-btn {
-  position: fixed;
-  bottom: 20px;
-  right: 20px;
-  background: #3fa55b;
-  color: #fff;
-  padding: 14px 22px;
-  border-radius: 999px;
-  text-decoration: none;
-  font-weight: bold;
-}
+  /* DATA */
+  const items = [
+    { id: 1, name: "Masala Chai", price: 49 },
+    { id: 2, name: "Coffee", price: 59 }
+  ];
 
-.cart-count
+  let cart = JSON.parse(localStorage.getItem(CART_KEY)) || {};
+  const menu = document.getElementById("menu");
+  const cartCount = document.getElementById("cart-count");
+
+  /* RENDER */
+  function render() {
+    menu.innerHTML = "";
+    let count = 0;
+
+    items.forEach(i => {
+      const qty = cart[i.id]?.qty || 0;
+      count += qty;
+
+      menu.innerHTML += `
+        <div class="menu-item" data-id="${i.id}">
+          <div>${i.name}<br>₹${i.price}</div>
+          ${
+            qty === 0
+            ? `<button class="add-btn">Add</button>`
+            : `<div class="qty">
+                <button class="minus">-</button>
+                <span>${qty}</span>
+                <button class="plus">+</button>
+              </div>`
+          }
+        </div>
+      `;
+    });
+
+    cartCount.innerText = count;
+    localStorage.setItem(CART_KEY, JSON.stringify(cart));
+  }
+
+  /* EVENTS */
+  menu.addEventListener("click", e => {
+    const card = e.target.closest(".menu-item");
+    if (!card) return;
+
+    const id = card.dataset.id;
+    const item = items.find(i => i.id == id);
+
+    if (e.target.classList.contains("add-btn")) {
+      cart[id] = { name: item.name, price: item.price, qty: 1 };
+    }
+
+    if (e.target.classList.contains("plus")) {
+      cart[id].qty++;
+    }
+
+    if (e.target.classList.contains("minus")) {
+      cart[id].qty--;
+      if (cart[id].qty === 0) delete cart[id];
+    }
+
+    render();
+  });
+
+  render();
+});
+</script>
+
+</body>
+</html>
