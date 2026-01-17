@@ -1,12 +1,9 @@
 {
-  "name": "cafe-ordering",
+  "name": "cafe-pos",
   "version": "1.0.0",
-  "main": "server.js",
-  "scripts": {
-    "start": "node server.js"
-  },
   "dependencies": {
     "express": "^4.18.2",
-    "sqlite3": "^5.1.6"
+    "sqlite3": "^5.1.6",
+    "exceljs": "^4.4.0"
   }
 }
