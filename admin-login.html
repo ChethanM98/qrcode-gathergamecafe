@@ -6,13 +6,20 @@
 <input type="password" id="pin" placeholder="Enter PIN">
 <button onclick="login()">Login</button>
 
-<script>
+  <script>
 function login() {
-  if (document.getElementById("pin").value === "14022398") {
-    sessionStorage.setItem("admin","yes");
-    location.href = "admin.html";
+  const pin = document.getElementById("pin").value;
+
+  if (pin === "1234") { // change PIN
+    localStorage.setItem("admin_auth", "true");
+    localStorage.setItem("admin_auth_time", Date.now());
+
+    const params = new URLSearchParams(location.search);
+    const redirect = params.get("redirect") || "admin.html";
+
+    location.href = redirect;
   } else {
-    alert("Wrong PIN");
+    alert("Invalid PIN");
   }
 }
 </script>
