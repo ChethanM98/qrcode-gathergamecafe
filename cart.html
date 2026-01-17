@@ -30,10 +30,37 @@ h1 {
   margin-bottom: 10px;
 }
 
-#cartItems .row {
+.row {
   display: flex;
   justify-content: space-between;
-  margin: 8px 0;
+  align-items: center;
+  margin: 10px 0;
+}
+
+.item-name {
+  flex: 1;
+}
+
+.qty {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.qty button {
+  width: 26px;
+  height: 26px;
+  border-radius: 50%;
+  border: none;
+  background: #7b4b2a;
+  color: #fff;
+  font-size: 16px;
+  cursor: pointer;
+}
+
+.price {
+  min-width: 70px;
+  text-align: right;
 }
 
 .total {
@@ -43,7 +70,7 @@ h1 {
   margin-top: 15px;
 }
 
-button {
+button.place-btn {
   width: 100%;
   margin-top: 20px;
   padding: 14px;
@@ -55,7 +82,7 @@ button {
   cursor: pointer;
 }
 
-button:hover {
+button.place-btn:hover {
   background: #2f8c4c;
 }
 
@@ -81,25 +108,16 @@ button:hover {
   <h1>Your Order</h1>
   <div id="tableInfo" class="table-info"></div>
 
-  <!-- Cart Items -->
   <div id="cartItems"></div>
-
-  <!-- Total -->
   <div id="total" class="total"></div>
 
-  <!-- Place Order -->
-  <button onclick="placeOrder()">Place Order</button>
-
-  <!-- Back to Menu -->
+  <button class="place-btn" onclick="placeOrder()">Place Order</button>
   <a id="backLink" class="back-link">← Back to Menu</a>
 </div>
 
 <script>
 document.addEventListener("DOMContentLoaded", function () {
 
-  /* =========================
-     TABLE NUMBER
-  ========================= */
   const params = new URLSearchParams(window.location.search);
   const table = params.get("table") || "default";
 
@@ -107,63 +125,93 @@ document.addEventListener("DOMContentLoaded", function () {
   const KITCHEN_KEY = "kitchen_orders";
   const QUEUE_KEY = "kitchen_queue";
 
-  document.getElementById("tableInfo").innerText =
-    `Table No: ${table}`;
+  document.getElementById("tableInfo").innerText = `Table No: ${table}`;
+  document.getElementById("backLink").href = `index.html?table=${table}`;
 
-  document.getElementById("backLink").href =
-    `index.html?table=${table}`;
-
-  /* =========================
-     LOAD CART
-  ========================= */
-  const cart = JSON.parse(localStorage.getItem(CART_KEY)) || {};
+  let cart = JSON.parse(localStorage.getItem(CART_KEY)) || {};
   const cartItemsDiv = document.getElementById("cartItems");
   const totalDiv = document.getElementById("total");
 
-  let total = 0;
+  /* =========================
+     RENDER CART
+  ========================= */
+  function renderCart() {
+    cartItemsDiv.innerHTML = "";
+    let total = 0;
 
-  if (Object.keys(cart).length === 0) {
-    cartItemsDiv.innerHTML =
-      `<p class="empty">Your cart is empty</p>`;
-    totalDiv.innerText = "";
-    return;
+    if (Object.keys(cart).length === 0) {
+      cartItemsDiv.innerHTML =
+        `<p class="empty">Your cart is empty</p>`;
+      totalDiv.innerText = "";
+      return;
+    }
+
+    for (const key in cart) {
+      const item = cart[key];
+      const itemTotal = item.price * item.qty;
+      total += itemTotal;
+
+      cartItemsDiv.innerHTML += `
+        <div class="row" data-key="${key}">
+          <div class="item-name">${item.name}</div>
+
+          <div class="qty">
+            <button class="minus">−</button>
+            <span>${item.qty}</span>
+            <button class="plus">+</button>
+          </div>
+
+          <div class="price">₹${itemTotal}</div>
+        </div>
+      `;
+    }
+
+    totalDiv.innerText = `Total: ₹${total}`;
+    localStorage.setItem(CART_KEY, JSON.stringify(cart));
   }
 
-  Object.values(cart).forEach(item => {
-    const itemTotal = item.price * item.qty;
-    total += itemTotal;
+  /* =========================
+     QUANTITY EVENTS
+  ========================= */
+  cartItemsDiv.addEventListener("click", e => {
+    const row = e.target.closest(".row");
+    if (!row) return;
 
-    cartItemsDiv.innerHTML += `
-      <div class="row">
-        <span>${item.name} × ${item.qty}</span>
-        <span>₹${itemTotal}</span>
-      </div>
-    `;
+    const key = row.dataset.key;
+
+    if (e.target.classList.contains("plus")) {
+      cart[key].qty++;
+    }
+
+    if (e.target.classList.contains("minus")) {
+      cart[key].qty--;
+      if (cart[key].qty === 0) delete cart[key];
+    }
+
+    renderCart();
   });
-
-  totalDiv.innerText = `Total: ₹${total}`;
 
   /* =========================
      PLACE ORDER
-     → Kitchen Queue (NO APPEND)
-     → Billing (APPENDABLE)
   ========================= */
   window.placeOrder = function () {
 
-    /* -------- 1️⃣ PUSH TO KITCHEN QUEUE -------- */
-    const queue =
-      JSON.parse(localStorage.getItem(QUEUE_KEY)) || [];
+    if (Object.keys(cart).length === 0) {
+      alert("Cart is empty");
+      return;
+    }
 
+    /* ---- 1️⃣ Kitchen Queue (NO APPEND) ---- */
+    const queue = JSON.parse(localStorage.getItem(QUEUE_KEY)) || [];
     queue.push({
-      table: table,
-      items: JSON.parse(JSON.stringify(cart)), // snapshot
+      table,
+      items: JSON.parse(JSON.stringify(cart)),
       status: "Pending",
       time: new Date().toLocaleString()
     });
-
     localStorage.setItem(QUEUE_KEY, JSON.stringify(queue));
 
-    /* -------- 2️⃣ BILLING (APPEND LOGIC) -------- */
+    /* ---- 2️⃣ Billing (APPENDABLE) ---- */
     const kitchenOrders =
       JSON.parse(localStorage.getItem(KITCHEN_KEY)) || [];
 
@@ -172,7 +220,6 @@ document.addEventListener("DOMContentLoaded", function () {
     );
 
     if (existingOrder) {
-      // Append items for same table
       for (const key in cart) {
         if (existingOrder.items[key]) {
           existingOrder.items[key].qty += cart[key].qty;
@@ -182,7 +229,7 @@ document.addEventListener("DOMContentLoaded", function () {
       }
     } else {
       kitchenOrders.push({
-        table: table,
+        table,
         items: cart,
         payment: "",
         status: "Open",
@@ -192,13 +239,13 @@ document.addEventListener("DOMContentLoaded", function () {
 
     localStorage.setItem(KITCHEN_KEY, JSON.stringify(kitchenOrders));
 
-    /* -------- 3️⃣ CLEAR CART -------- */
+    /* ---- 3️⃣ Clear Cart ---- */
     localStorage.removeItem(CART_KEY);
-
     alert("Order sent to kitchen!");
-    window.location.href = `index.html?table=${table}`;
+    location.href = `index.html?table=${table}`;
   };
 
+  renderCart();
 });
 </script>
 
