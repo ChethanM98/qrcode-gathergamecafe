@@ -3,7 +3,7 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>Cart – Gather & Game Café</title>
+<title>Review Order</title>
 
 <style>
 body {
@@ -12,17 +12,12 @@ body {
   padding: 20px;
 }
 
-h1 {
-  text-align: center;
-}
-
-.cart-container {
+.cart-box {
   max-width: 700px;
   margin: auto;
   background: #fff;
   padding: 20px;
   border-radius: 12px;
-  box-shadow: 0 4px 12px rgba(0,0,0,0.15);
 }
 
 .cart-item {
@@ -32,20 +27,11 @@ h1 {
   border-bottom: 1px solid #ddd;
 }
 
-.cart-item:last-child {
-  border-bottom: none;
-}
-
 .total {
+  text-align: right;
   font-size: 18px;
   font-weight: bold;
-  text-align: right;
   margin-top: 15px;
-}
-
-.empty {
-  text-align: center;
-  color: #666;
 }
 
 .actions {
@@ -58,17 +44,17 @@ button, a {
   padding: 12px 18px;
   border-radius: 999px;
   border: none;
-  text-decoration: none;
   font-weight: bold;
+  text-decoration: none;
   cursor: pointer;
 }
 
-.back-btn {
+.back {
   background: #7b4b2a;
   color: #fff;
 }
 
-.place-btn {
+.place {
   background: #3fa55b;
   color: #fff;
 }
@@ -77,110 +63,54 @@ button, a {
 
 <body>
 
-<h1>🧾 Review Order</h1>
+<h1 style="text-align:center">🧾 Review Order</h1>
 
-<div class="cart-container">
-  <div id="table-info"></div>
-  <div id="cart-items"></div>
+<div class="cart-box">
+  <p id="tableInfo"></p>
+  <div id="cartItems"></div>
   <div id="total" class="total"></div>
 
   <div class="actions">
-    <a id="backBtn" class="back-btn">⬅ Back to Menu</a>
-    <button class="place-btn" onclick="placeOrder()">Place Order</button>
+    <a id="backBtn" class="back">⬅ Back</a>
+    <button class="place" onclick="placeOrder()">Place Order</button>
   </div>
 </div>
 
 <script>
 document.addEventListener("DOMContentLoaded", function () {
 
-  /* ================================
-     1. TABLE NUMBER
-  ================================= */
   const params = new URLSearchParams(window.location.search);
   const tableNo = params.get("table") || "default";
   const CART_KEY = `cart_table_${tableNo}`;
   const KITCHEN_KEY = "kitchen_orders";
 
-  document.getElementById("table-info").innerHTML =
-    `<strong>Table No:</strong> ${tableNo}`;
+  document.getElementById("tableInfo").innerText =
+    `Table No: ${tableNo}`;
 
-  /* ================================
-     2. LOAD CART
-  ================================= */
+  document.getElementById("backBtn").href =
+    `index.html?table=${tableNo}`;
+
   const cart = JSON.parse(localStorage.getItem(CART_KEY)) || {};
-  const cartItemsDiv = document.getElementById("cart-items");
+  const cartItemsDiv = document.getElementById("cartItems");
   const totalDiv = document.getElementById("total");
 
   let total = 0;
 
   if (Object.keys(cart).length === 0) {
-    cartItemsDiv.innerHTML = `<p class="empty">Your cart is empty</p>`;
-    totalDiv.innerText = "";
-  } else {
-    for (const name in cart) {
-      const item = cart[name];
-      const itemTotal = item.price * item.qty;
-      total += itemTotal;
-
-      cartItemsDiv.innerHTML += `
-        <div class="cart-item">
-          <div>
-            <strong>${name}</strong><br>
-            ₹${item.price} × ${item.qty}
-          </div>
-          <div>₹${itemTotal}</div>
-        </div>
-      `;
-    }
-    totalDiv.innerText = `Total: ₹${total}`;
+    cartItemsDiv.innerHTML = "<p>Cart is empty</p>";
+    return;
   }
 
-  /* ================================
-     3. BACK TO MENU
-  ================================= */
-  document.getElementById("backBtn").href =
-    `index.html?table=${tableNo}`;
+  for (const name in cart) {
+    const item = cart[name];
+    const itemTotal = item.price * item.qty;
+    total += itemTotal;
 
-  /* ================================
-     4. PLACE ORDER (KITCHEN)
-  ================================= */
-  window.placeOrder = function () {
-
-    if (Object.keys(cart).length === 0) {
-      alert("Cart is empty");
-      return;
-    }
-
-    const kitchenOrders =
-      JSON.parse(localStorage.getItem(KITCHEN_KEY)) || [];
-
-    const now = new Date();
-    const time =
-      now.toISOString().slice(0, 19).replace("T", " ");
-
-    kitchenOrders.push({
-      table: tableNo,
-      items: cart,
-      total: total,
-      time: time,
-      status: "New"
-    });
-
-    // Save kitchen orders
-    localStorage.setItem(KITCHEN_KEY, JSON.stringify(kitchenOrders));
-
-    // Clear only THIS table cart
-    localStorage.removeItem(CART_KEY);
-
-    alert("Order placed successfully!");
-
-    // Optional: redirect back to menu
-    window.location.href = `index.html?table=${tableNo}`;
-  };
-
-});
-</script>
-
-</body>
-</html>
-
+    cartItemsDiv.innerHTML += `
+      <div class="cart-item">
+        <div>
+          <strong>${name}</strong><br>
+          ₹${item.price} × ${item.qty}
+        </div>
+        <div>₹${itemTotal}</div>
+      </div>
