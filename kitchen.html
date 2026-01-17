@@ -18,6 +18,7 @@ body {
   margin-bottom:16px;
   border-radius:10px;
   border-left:8px solid #f39c12;
+  page-break-inside: avoid;
 }
 
 .order h2 {
@@ -31,11 +32,38 @@ body {
   font-size:16px;
 }
 
-select {
+.actions {
   margin-top:12px;
+}
+
+select, button {
+  width:100%;
   padding:8px;
   font-size:14px;
-  width:100%;
+  margin-top:6px;
+}
+
+/* ===== PRINT ONLY ONE ORDER ===== */
+@media print {
+  body * {
+    visibility: hidden;
+  }
+
+  .print-area, .print-area * {
+    visibility: visible;
+  }
+
+  .print-area {
+    position:absolute;
+    left:0;
+    top:0;
+    width:80mm;       /* thermal friendly */
+    font-size:12px;
+  }
+
+  select, button {
+    display:none;
+  }
 }
 </style>
 </head>
@@ -52,7 +80,7 @@ document.addEventListener("DOMContentLoaded", () => {
   const list = document.getElementById("list");
 
   load();
-  setInterval(load, 5000); // refresh every 5s
+  setInterval(load, 5000);
 
   function load() {
     const queue = JSON.parse(localStorage.getItem(QUEUE_KEY)) || [];
@@ -71,26 +99,50 @@ document.addEventListener("DOMContentLoaded", () => {
         itemsHTML += `
           <div class="item">
             <span>${i.name} × ${i.qty}</span>
-          </div>`;
+          </div>
+        `;
       }
 
       list.innerHTML += `
-        <div class="order">
+        <div class="order print-area">
           <h2>Table ${order.table}</h2>
+          <div>⏱ ${order.time}</div>
+
           ${itemsHTML}
-          <select onchange="markServed(${index})">
-            <option value="">Pending</option>
-            <option value="Served">Served</option>
-          </select>
-        </div>`;
+
+          <div class="actions">
+            <button onclick="printThis(this)">🖨 Print</button>
+
+            <select onchange="markServed(${index})">
+              <option value="">Pending</option>
+              <option value="Served">Served</option>
+            </select>
+          </div>
+        </div>
+      `;
     });
   }
 
+  /* ===== MARK SERVED ===== */
   window.markServed = index => {
     let queue = JSON.parse(localStorage.getItem(QUEUE_KEY)) || [];
     queue.splice(index, 1);
     localStorage.setItem(QUEUE_KEY, JSON.stringify(queue));
     load();
+  };
+
+  /* ===== PRINT ONLY THIS ORDER ===== */
+  window.printThis = function (btn) {
+    const box = btn.closest(".order");
+    document.querySelectorAll(".order").forEach(o => {
+      if (o !== box) o.style.display = "none";
+    });
+
+    window.print();
+
+    document.querySelectorAll(".order").forEach(o => {
+      o.style.display = "";
+    });
   };
 
 });
