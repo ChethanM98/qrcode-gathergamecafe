@@ -1,62 +1,15 @@
 <!DOCTYPE html>
-<html lang="en">
+<html>
 <head>
-<meta charset="UTF-8">
-<title>Your Order</title>
-
-<style>
-body {
-  font-family: Arial, sans-serif;
-  background: #f4efe8;
-  padding: 20px;
-}
-.container {
-  max-width: 600px;
-  margin: auto;
-  background: #fff;
-  padding: 20px;
-  border-radius: 10px;
-}
-#cartItems p {
-  display: flex;
-  justify-content: space-between;
-}
-button {
-  width: 100%;
-  margin-top: 20px;
-  padding: 14px;
-  background: #3fa55b;
-  color: #fff;
-  border: none;
-  border-radius: 999px;
-  font-size: 16px;
-}
-.back-link {
-  display: block;
-  margin-top: 15px;
-  text-align: center;
-  color: #7b4b2a;
-  text-decoration: none;
-  font-weight: bold;
-}
-</style>
+<title>Your Cart</title>
 </head>
-
 <body>
 
-<div class="container">
-  <h1>Your Order</h1>
-  <div id="cartItems"></div>
+<h1>Your Order</h1>
+<div id="cartItems"></div>
 
-  <button onclick="placeOrder()">Place Order</button>
-
-  <a href="index.html" class="back-link">← Back to Menu</a>
-</div>
+<button onclick="placeOrder()">Place Order</button>
 
 <script src="script.js"></script>
-<script>
-  document.addEventListener("DOMContentLoaded", showCart);
-</script>
-
 </body>
 </html>
