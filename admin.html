@@ -1,31 +1,58 @@
 <!DOCTYPE html>
 <html>
 <head>
-<title>Admin POS</title>
+<title>Kitchen & Billing</title>
+
 <style>
-body { font-family: Arial; background:#f2f2f2; }
-.table-box {
+body { font-family: Arial; background:#f2f2f2; padding:20px; }
+
+.order-box {
   background:#fff;
-  padding:14px;
-  margin:14px;
+  padding:16px;
+  margin-bottom:20px;
+  border-radius:10px;
   border:2px solid #333;
 }
-.invoice {
-  border:1px solid #000;
-  padding:10px;
-  margin-top:10px;
+
+.table-title {
+  font-size:18px;
+  font-weight:bold;
 }
-.line {
+
+.items {
+  margin:10px 0;
+}
+
+.item-row {
   display:flex;
   justify-content:space-between;
+  margin:6px 0;
 }
-button, select {
-  margin-top:6px;
-  padding:6px 10px;
+
+.total {
+  text-align:right;
+  font-weight:bold;
+  margin-top:8px;
 }
+
+.actions {
+  display:flex;
+  justify-content:space-between;
+  align-items:center;
+  margin-top:12px;
+}
+
+select, button {
+  padding:8px 12px;
+}
+
+.print-btn { background:#7b4b2a; color:#fff; border:none; }
+.close-btn { background:#3fa55b; color:#fff; border:none; }
+
 @media print {
   body * { visibility:hidden; }
-  .invoice, .invoice * { visibility:visible; }
+  .order-box, .order-box * { visibility:visible; }
+  .order-box { position:absolute; left:0; top:0; width:100%; }
 }
 </style>
 </head>
@@ -47,70 +74,93 @@ document.addEventListener("DOMContentLoaded", function () {
   const KITCHEN_KEY = "kitchen_orders";
   const ordersDiv = document.getElementById("orders");
 
-  loadKitchenOrders();
+  loadOrders();
 
-  function loadKitchenOrders() {
-    const orders =
-      JSON.parse(localStorage.getItem(KITCHEN_KEY)) || [];
-
+  function loadOrders() {
+    const orders = JSON.parse(localStorage.getItem(KITCHEN_KEY)) || [];
     ordersDiv.innerHTML = "";
 
-    if (orders.length === 0) {
-      ordersDiv.innerHTML = "<p>No kitchen orders yet</p>";
+    const openOrders = orders.filter(o => o.status === "Open");
+
+    if (openOrders.length === 0) {
+      ordersDiv.innerHTML = "<p>No open orders</p>";
       return;
     }
 
-    orders.forEach((order, index) => {
-      let itemsHtml = "";
+    openOrders.forEach((order, index) => {
+      let itemsHTML = "";
+      let total = 0;
+
       for (const name in order.items) {
         const item = order.items[name];
-        itemsHtml += `
-          <div class="line">
+        const lineTotal = item.price * item.qty;
+        total += lineTotal;
+
+        itemsHTML += `
+          <div class="item-row">
             <span>${name} × ${item.qty}</span>
-            <span>₹${item.price * item.qty}</span>
+            <span>₹${lineTotal}</span>
           </div>
         `;
       }
 
       ordersDiv.innerHTML += `
-        <div class="table-box">
-          <strong>Table:</strong> ${order.table}<br>
-          <strong>Time:</strong> ${order.time}<br>
-          <strong>Status:</strong>
-          <select onchange="updateStatus(${index}, this.value)">
-            <option ${order.status==="New"?"selected":""}>New</option>
-            <option ${order.status==="Preparing"?"selected":""}>Preparing</option>
-            <option ${order.status==="Ready"?"selected":""}>Ready</option>
-            <option ${order.status==="Served"?"selected":""}>Served</option>
-          </select>
+        <div class="order-box">
+          <div class="table-title">Table ${order.table}</div>
 
-          <div class="invoice">
-            ${itemsHtml}
-            <hr>
-            <div class="line">
-              <strong>Total</strong>
-              <strong>₹${order.total}</strong>
-            </div>
+          <div class="items">
+            ${itemsHTML}
+            <div class="total">Total: ₹${total}</div>
           </div>
 
-          <button onclick="printInvoice(this)">🖨️ Print</button>
+          <div class="actions">
+            <div>
+              Payment:
+              <select onchange="setPayment('${order.table}', this.value)">
+                <option value="">Select</option>
+                <option value="Cash" ${order.payment==="Cash"?"selected":""}>Cash</option>
+                <option value="UPI" ${order.payment==="UPI"?"selected":""}>UPI</option>
+              </select>
+            </div>
+
+            <div>
+              <button class="print-btn" onclick="printBill()">Print Bill</button>
+              <button class="close-btn" onclick="closeBill('${order.table}')">
+                Close Bill
+              </button>
+            </div>
+          </div>
         </div>
       `;
     });
   }
 
-  window.updateStatus = function (index, status) {
-    const orders =
-      JSON.parse(localStorage.getItem(KITCHEN_KEY)) || [];
-    orders[index].status = status;
-    localStorage.setItem(KITCHEN_KEY, JSON.stringify(orders));
-    loadKitchenOrders();
+  window.setPayment = function (table, method) {
+    const orders = JSON.parse(localStorage.getItem(KITCHEN_KEY)) || [];
+    const order = orders.find(o => o.table === table && o.status === "Open");
+    if (order) {
+      order.payment = method;
+      localStorage.setItem(KITCHEN_KEY, JSON.stringify(orders));
+    }
   };
 
-  window.printInvoice = function (btn) {
-    btn.closest(".table-box")
-       .querySelector(".invoice")
-       .classList.add("print");
+  window.closeBill = function (table) {
+    const orders = JSON.parse(localStorage.getItem(KITCHEN_KEY)) || [];
+    const index = orders.findIndex(o => o.table === table && o.status === "Open");
+
+    if (index === -1) return;
+
+    if (!orders[index].payment) {
+      alert("Select payment method before closing bill");
+      return;
+    }
+
+    orders.splice(index, 1); // close order
+    localStorage.setItem(KITCHEN_KEY, JSON.stringify(orders));
+    loadOrders();
+  };
+
+  window.printBill = function () {
     window.print();
   };
 
