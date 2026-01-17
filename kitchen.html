@@ -18,11 +18,16 @@ body {
   margin-bottom:16px;
   border-radius:10px;
   border-left:8px solid #f39c12;
-  page-break-inside: avoid;
 }
 
 .order h2 {
-  margin:0 0 10px 0;
+  margin:0 0 8px 0;
+}
+
+.time {
+  font-size:13px;
+  color:#555;
+  margin-bottom:8px;
 }
 
 .item {
@@ -34,13 +39,15 @@ body {
 
 .actions {
   margin-top:12px;
+  display:flex;
+  gap:10px;
 }
 
-select, button {
-  width:100%;
-  padding:8px;
+button, select {
+  flex:1;
+  padding:10px;
   font-size:14px;
-  margin-top:6px;
+  cursor:pointer;
 }
 
 /* ===== PRINT ONLY ONE ORDER ===== */
@@ -57,11 +64,11 @@ select, button {
     position:absolute;
     left:0;
     top:0;
-    width:80mm;       /* thermal friendly */
+    width:80mm;
     font-size:12px;
   }
 
-  select, button {
+  button, select {
     display:none;
   }
 }
@@ -92,26 +99,27 @@ document.addEventListener("DOMContentLoaded", () => {
     }
 
     queue.forEach((order, index) => {
-      let itemsHTML = "";
 
+      let itemsHTML = "";
       for (const k in order.items) {
         const i = order.items[k];
         itemsHTML += `
           <div class="item">
             <span>${i.name} × ${i.qty}</span>
-          </div>
-        `;
+          </div>`;
       }
 
       list.innerHTML += `
-        <div class="order print-area">
+        <div class="order print-area" data-index="${index}">
           <h2>Table ${order.table}</h2>
-          <div>⏱ ${order.time}</div>
+          <div class="time">⏱ ${order.time}</div>
 
           ${itemsHTML}
 
           <div class="actions">
-            <button onclick="printThis(this)">🖨 Print</button>
+            <button onclick="printAndServe(${index}, this)">
+              🖨 Print
+            </button>
 
             <select onchange="markServed(${index})">
               <option value="">Pending</option>
@@ -123,26 +131,33 @@ document.addEventListener("DOMContentLoaded", () => {
     });
   }
 
-  /* ===== MARK SERVED ===== */
-  window.markServed = index => {
-    let queue = JSON.parse(localStorage.getItem(QUEUE_KEY)) || [];
-    queue.splice(index, 1);
-    localStorage.setItem(QUEUE_KEY, JSON.stringify(queue));
-    load();
-  };
+  /* ===== PRINT → AUTO REMOVE ===== */
+  window.printAndServe = function (index, btn) {
 
-  /* ===== PRINT ONLY THIS ORDER ===== */
-  window.printThis = function (btn) {
     const box = btn.closest(".order");
+
+    // Hide other orders
     document.querySelectorAll(".order").forEach(o => {
       if (o !== box) o.style.display = "none";
     });
 
     window.print();
 
-    document.querySelectorAll(".order").forEach(o => {
-      o.style.display = "";
-    });
+    // Remove order after print
+    let queue = JSON.parse(localStorage.getItem(QUEUE_KEY)) || [];
+    queue.splice(index, 1);
+    localStorage.setItem(QUEUE_KEY, JSON.stringify(queue));
+
+    // Restore UI
+    load();
+  };
+
+  /* ===== MANUAL SERVED ===== */
+  window.markServed = function (index) {
+    let queue = JSON.parse(localStorage.getItem(QUEUE_KEY)) || [];
+    queue.splice(index, 1);
+    localStorage.setItem(QUEUE_KEY, JSON.stringify(queue));
+    load();
   };
 
 });
