@@ -1,60 +1,29 @@
-/*************************************************
- * ADMIN SECURITY (admin.html only)
- *************************************************/
-if (
-  location.pathname.includes("admin.html") &&
-  sessionStorage.getItem("admin") !== "yes"
-) {
-  location.href = "admin-login.html";
-}
-
-/*************************************************
- * TABLE HANDLING
- *************************************************/
-const params = new URLSearchParams(location.search);
+// ===== TABLE NUMBER =====
+const params = new URLSearchParams(window.location.search);
 if (params.get("table")) {
-  localStorage.setItem("table", params.get("table"));
+  localStorage.setItem("tableNumber", params.get("table"));
 }
-const table = localStorage.getItem("table") || "Unknown";
+const tableNumber = localStorage.getItem("tableNumber") || "Unknown";
 
-/*************************************************
- * CART STORAGE (SINGLE SOURCE)
- *************************************************/
+// ===== CART =====
 let cart = JSON.parse(localStorage.getItem("cart")) || [];
 
-/*************************************************
- * CART BADGE
- *************************************************/
-function updateCartCount() {
-  const badge = document.getElementById("cart-count");
-  if (!badge) return;
-
-  const totalQty = cart.reduce((sum, item) => sum + item.qty, 0);
-  badge.innerText = totalQty;
-}
-
-/*************************************************
- * MENU QTY UI ONLY
- *************************************************/
-function changeQty(btn, delta) {
-  const qtySpan = btn.parentElement.querySelector(".qty-value");
-  let qty = parseInt(qtySpan.innerText) + delta;
+// ===== QUANTITY BUTTON =====
+function changeQty(button, delta) {
+  const span = button.parentElement.querySelector(".qty-value");
+  let qty = parseInt(span.innerText);
+  qty += delta;
   if (qty < 1) qty = 1;
-  qtySpan.innerText = qty;
+  span.innerText = qty;
 }
 
-/*************************************************
- * ADD TO CART (MENU PAGE)
- *************************************************/
-function addToCartFromUI(btn, name, price) {
-  if (isNaN(price)) price = 0;
+// ===== ADD TO CART =====
+function addToCartFromUI(button, name, price) {
+  const qtySpan = button
+    .closest(".menu-item")
+    .querySelector(".qty-value");
 
-  const card = btn.closest(".menu-item");
-  const qtySpan = card.querySelector(".qty-value");
   const qty = parseInt(qtySpan.innerText);
-
-  btn.style.display = "none";
-  card.querySelector(".qty-control").style.display = "flex";
 
   const existing = cart.find(i => i.name === name);
   if (existing) {
@@ -64,103 +33,67 @@ function addToCartFromUI(btn, name, price) {
   }
 
   localStorage.setItem("cart", JSON.stringify(cart));
-  updateCartCount();
+  alert(`${name} x${qty} added`);
+
+  qtySpan.innerText = 1;
 }
 
-/*************************************************
- * SHOW CART (cart.html)
- *************************************************/
+// ===== SHOW CART =====
 function showCart() {
-  const container = document.getElementById("cartItems");
-  if (!container) return;
+  const div = document.getElementById("cartItems");
+  if (!div) return;
 
-  container.innerHTML = "";
+  div.innerHTML = "";
   let total = 0;
 
-  if (cart.length === 0) {
-    container.innerHTML = "<p>Your cart is empty.</p>";
-    return;
-  }
-
-  cart.forEach(item => {
-    const lineTotal = item.price * item.qty;
-    total += lineTotal;
-
-    container.innerHTML += `
-      <p>
-        <span>${item.name} × ${item.qty}</span>
-        <span>₹${lineTotal.toFixed(2)}</span>
-      </p>
-    `;
+  cart.forEach(i => {
+    const itemTotal = i.price * i.qty;
+    total += itemTotal;
+    div.innerHTML += `<p>${i.name} x${i.qty} – ₹${itemTotal}</p>`;
   });
 
-  container.innerHTML += `
-    <hr>
-    <h3>Total: ₹${total.toFixed(2)}</h3>
-  `;
+  div.innerHTML += `<h3>Total: ₹${total}</h3>`;
 }
 
-/*************************************************
- * PLACE ORDER
- *************************************************/
+// ===== PLACE ORDER =====
 function placeOrder() {
-  if (cart.length === 0) {
-    alert("Cart is empty");
-    return;
-  }
-
   fetch("/order", {
     method: "POST",
-    headers: { "Content-Type": "application/json" },
-    body: JSON.stringify({ table, items: cart })
+    headers: {"Content-Type":"application/json"},
+    body: JSON.stringify({ table: tableNumber, items: cart })
   })
-    .then(() => {
-      localStorage.removeItem("cart");
-      cart = [];
-      updateCartCount();
-      alert("Order placed successfully!");
-      location.href = "index.html?table=" + table;
-    })
-    .catch(() => alert("Server error. Try again."));
+  .then(r => r.json())
+  .then(() => {
+    cart = [];
+    localStorage.removeItem("cart");
+    showCart();
+    alert("Order placed!");
+    window.location.href = "index.html?table=" + tableNumber;
+  });
 }
 
-/*************************************************
- * ADMIN: LOAD ORDERS
- *************************************************/
+// ===== KITCHEN =====
 function loadOrders() {
   fetch("/orders")
-    .then(res => res.json())
-    .then(rows => {
-      const container = document.getElementById("orders");
-      if (!container) return;
-
-      container.innerHTML = "";
-
-      if (!rows.length) {
-        container.innerHTML = "<p>No active orders</p>";
-        return;
-      }
-
-      rows.forEach(order => {
-        const items = JSON.parse(order.items);
-        let html = `<div style="border:1px solid #000;padding:10px;margin-bottom:10px;">
-          <h3>Table ${order.table_no}</h3>`;
-
-        items.forEach(i => {
-          html += `<p>${i.name} × ${i.qty}</p>`;
-        });
-
-        html += `</div>`;
-        container.innerHTML += html;
+    .then(r => r.json())
+    .then(data => {
+      const div = document.getElementById("orders");
+      if (!div) return;
+      div.innerHTML = "";
+      data.forEach(o => {
+        const box = document.createElement("div");
+        box.className = "order-box";
+        const items = JSON.parse(o.items)
+          .map(i => `${i.name} x${i.qty}`).join(", ");
+        box.innerHTML = `
+          <strong>Table ${o.table_no}</strong><br>
+          ${items}
+        `;
+        div.appendChild(box);
       });
     });
 }
 
-/*************************************************
- * AUTO INIT
- *************************************************/
-document.addEventListener("DOMContentLoaded", () => {
-  updateCartCount();
-  showCart();
-  loadOrders();
-});
+showCart();
+setInterval(loadOrders,2000);
+loadOrders();
