@@ -1,14 +1,76 @@
 <!DOCTYPE html>
-<html>
+<html lang="en">
 <head>
+<meta charset="UTF-8">
 <title>Your Order</title>
+
+<style>
+body {
+  font-family: Arial, sans-serif;
+  background: #f4efe8;
+  padding: 20px;
+}
+
+.container {
+  max-width: 600px;
+  margin: auto;
+  background: #ffffff;
+  padding: 20px;
+  border-radius: 10px;
+  box-shadow: 0 4px 12px rgba(0,0,0,0.15);
+}
+
+h1 {
+  text-align: center;
+}
+
+#cartItems p {
+  display: flex;
+  justify-content: space-between;
+  margin: 8px 0;
+}
+
+button {
+  width: 100%;
+  margin-top: 20px;
+  padding: 14px;
+  font-size: 16px;
+  background: #3fa55b;
+  color: white;
+  border: none;
+  border-radius: 999px;
+  cursor: pointer;
+}
+
+button:hover {
+  background: #2f8c4c;
+}
+
+.back-link {
+  display: block;
+  text-align: center;
+  margin-top: 15px;
+  text-decoration: none;
+  color: #7b4b2a;
+  font-weight: bold;
+}
+</style>
 </head>
+
 <body>
 
-<h1>Your Order</h1>
-<div id="cartItems"></div>
+<div class="container">
+  <h1>Your Order</h1>
 
-<button onclick="placeOrder()">Place Order</button>
+  <!-- Cart Items -->
+  <div id="cartItems"></div>
+
+  <!-- Place Order -->
+  <button onclick="placeOrder()">Place Order</button>
+
+  <!-- Back to Menu -->
+  <a href="index.html" class="back-link">← Back to Menu</a>
+</div>
 
 <script src="script.js"></script>
 </body>
