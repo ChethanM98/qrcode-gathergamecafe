@@ -1,176 +1,221 @@
 <!DOCTYPE html>
-<html>
+<html lang="en">
 <head>
-<title>Billing</title>
+<meta charset="UTF-8">
+<title>Admin POS</title>
 
 <style>
-body { font-family: Arial; background:#f2f2f2; padding:20px; }
+body {
+  font-family: Arial, sans-serif;
+  background:#f2f2f2;
+  padding:20px;
+}
 
-.order-box {
+h1 {
+  text-align:center;
+}
+
+.order {
   background:#fff;
   padding:16px;
   margin-bottom:20px;
   border-radius:10px;
-  border:2px solid #333;
-  page-break-inside: avoid;
+  box-shadow:0 4px 10px rgba(0,0,0,0.15);
 }
 
-.table-title { font-size:18px; font-weight:bold; }
-.items { border-top:1px solid #ccc; border-bottom:1px solid #ccc; padding:10px 0; }
-.item-row { display:flex; justify-content:space-between; margin:6px 0; }
-.total { text-align:right; font-weight:bold; margin-top:10px; line-height:1.6; }
+.order h2 {
+  margin:0 0 10px 0;
+}
 
-.actions {
+.item {
   display:flex;
   justify-content:space-between;
-  align-items:center;
+  margin:6px 0;
+}
+
+.summary {
+  margin-top:10px;
+  border-top:1px dashed #ccc;
+  padding-top:10px;
+}
+
+.summary div {
+  display:flex;
+  justify-content:space-between;
+  margin:4px 0;
+}
+
+.actions {
   margin-top:12px;
 }
 
-select, button { padding:8px 12px; font-size:14px; }
+select, button {
+  padding:10px;
+  margin-top:6px;
+  width:100%;
+  font-size:14px;
+}
 
-.print-btn { background:#7b4b2a; color:#fff; border:none; }
-.close-btn { background:#3fa55b; color:#fff; border:none; }
+button {
+  background:#3fa55b;
+  color:#fff;
+  border:none;
+  border-radius:999px;
+  cursor:pointer;
+}
+
+button.close {
+  background:#b33939;
+}
 
 @media print {
   body * { visibility:hidden; }
   .print-area, .print-area * { visibility:visible; }
   .print-area {
     position:absolute;
-    left:0; top:0;
+    left:0;
+    top:0;
     width:80mm;
-    font-size:12px;
   }
-  button, select { display:none; }
 }
 </style>
 </head>
 
 <body>
 
-<h1>Gather & Game Cafe Billing</h1>
+<h1>🧾 Billing Counter</h1>
 <div id="orders"></div>
 
 <script>
-document.addEventListener("DOMContentLoaded", () => {
+const KITCHEN_KEY = "kitchen_orders";
+const CLOSED_KEY = "closed_bills";
 
-  const KITCHEN_KEY = "kitchen_orders";
-  const CLOSED_KEY = "closed_bills";
+loadOrders();
+setInterval(loadOrders, 10000);
+
+/* ================= LOAD ORDERS ================= */
+function loadOrders() {
   const ordersDiv = document.getElementById("orders");
+  const orders = JSON.parse(localStorage.getItem(KITCHEN_KEY)) || [];
+  ordersDiv.innerHTML = "";
 
-  loadOrders();
-  setInterval(loadOrders, 10000); // auto-refresh
-
-  function loadOrders() {
-    const orders = JSON.parse(localStorage.getItem(KITCHEN_KEY)) || [];
-    ordersDiv.innerHTML = "";
-
-    if (orders.length === 0) {
-      ordersDiv.innerHTML = "<p>No open orders</p>";
-      return;
-    }
-
-    orders.forEach(order => {
-      let itemsHTML = "";
-      let subTotal = 0;
-
-      for (const k in order.items) {
-        const i = order.items[k];
-        const line = i.price * i.qty;
-        subTotal += line;
-
-        itemsHTML += `
-          <div class="item-row">
-            <span>${i.name} × ${i.qty}</span>
-            <span>₹${line.toFixed(2)}</span>
-          </div>`;
-      }
-
-      const cgst = subTotal * 0.025;
-      const sgst = subTotal * 0.025;
-      const grand = subTotal + cgst + sgst;
-
-      ordersDiv.innerHTML += `
-        <div class="order-box print-area">
-          <div class="table-title">Table ${order.table}</div>
-
-          <div class="items">
-            ${itemsHTML}
-            <div class="total">
-              Subtotal: ₹${subTotal.toFixed(2)}<br>
-              CGST: ₹${cgst.toFixed(2)}<br>
-              SGST: ₹${sgst.toFixed(2)}<br>
-              <strong>Grand Total: ₹${grand.toFixed(2)}</strong>
-            </div>
-          </div>
-
-          <div class="actions">
-            <select onchange="setPayment('${order.table}', this.value)">
-              <option value="">Payment</option>
-              <option value="Cash" ${order.payment==="Cash"?"selected":""}>Cash</option>
-              <option value="UPI" ${order.payment==="UPI"?"selected":""}>UPI</option>
-            </select>
-
-            <div>
-              <button class="print-btn" onclick="printThis(this)">Print</button>
-              <button class="close-btn"
-                onclick="closeBill('${order.table}', ${subTotal}, ${cgst}, ${sgst}, ${grand})">
-                Close Bill
-              </button>
-            </div>
-          </div>
-        </div>`;
-    });
+  if (orders.length === 0) {
+    ordersDiv.innerHTML = "<p>No open bills</p>";
+    return;
   }
 
-  window.setPayment = (table, method) => {
-    const orders = JSON.parse(localStorage.getItem(KITCHEN_KEY)) || [];
-    const o = orders.find(x => x.table === table);
-    if (o) {
-      o.payment = method;
-      localStorage.setItem(KITCHEN_KEY, JSON.stringify(orders));
+  orders.forEach(order => {
+
+    let subtotal = 0;
+    let itemsHTML = "";
+
+    for (const k in order.items) {
+      const i = order.items[k];
+      const total = i.price * i.qty;
+      subtotal += total;
+
+      itemsHTML += `
+        <div class="item">
+          <span>${i.name} × ${i.qty}</span>
+          <span>₹${total}</span>
+        </div>
+      `;
     }
-  };
 
-  window.closeBill = (table, sub, cgst, sgst, grand) => {
-    let orders = JSON.parse(localStorage.getItem(KITCHEN_KEY)) || [];
-    let closed = JSON.parse(localStorage.getItem(CLOSED_KEY)) || [];
+    const cgst = +(subtotal * 0.025).toFixed(2);
+    const sgst = +(subtotal * 0.025).toFixed(2);
+    const grandTotal = +(subtotal + cgst + sgst).toFixed(2);
 
-    const idx = orders.findIndex(o => o.table === table);
-    if (idx === -1) return;
-    if (!orders[idx].payment) return alert("Select payment method");
+    ordersDiv.innerHTML += `
+      <div class="order print-area">
+        <h2>Table ${order.table}</h2>
+        ${itemsHTML}
 
-    const now = new Date();
-    closed.push({
-      table,
-      items: orders[idx].items,
-      subTotal: sub,
-      cgst, sgst,
-      grandTotal: grand,
-      payment: orders[idx].payment,
-      date: now.toISOString().slice(0,10),
-      month: now.toISOString().slice(0,7)
-    });
+        <div class="summary">
+          <div><span>Subtotal</span><span>₹${subtotal}</span></div>
+          <div><span>CGST (2.5%)</span><span>₹${cgst}</span></div>
+          <div><span>SGST (2.5%)</span><span>₹${sgst}</span></div>
+          <div><b>Total</b><b>₹${grandTotal}</b></div>
+        </div>
 
-    orders.splice(idx, 1);
+        <div class="actions">
+          <select onchange="setPayment('${order.table}', this.value)">
+            <option value="">Select Payment</option>
+            <option value="Cash">Cash</option>
+            <option value="UPI">UPI</option>
+          </select>
+
+          <button onclick="printBill(this)">🖨 Print Bill</button>
+          <button class="close" onclick="closeBill('${order.table}')">
+            Close Bill
+          </button>
+        </div>
+      </div>
+    `;
+  });
+}
+
+/* ================= SET PAYMENT ================= */
+function setPayment(table, method) {
+  const orders = JSON.parse(localStorage.getItem(KITCHEN_KEY)) || [];
+  const order = orders.find(o => o.table === table);
+  if (order) {
+    order.payment = method;
     localStorage.setItem(KITCHEN_KEY, JSON.stringify(orders));
-    localStorage.setItem(CLOSED_KEY, JSON.stringify(closed));
-    loadOrders();
-  };
+  }
+}
 
-  window.printThis = btn => {
-    const box = btn.closest(".order-box");
-    document.querySelectorAll(".order-box").forEach(b => {
-      if (b !== box) b.style.display = "none";
-    });
-    window.print();
-    document.querySelectorAll(".order-box").forEach(b => b.style.display = "");
-  };
+/* ================= CLOSE BILL ================= */
+function closeBill(table) {
 
-});
+  let orders = JSON.parse(localStorage.getItem(KITCHEN_KEY)) || [];
+  let closed = JSON.parse(localStorage.getItem(CLOSED_KEY)) || [];
+
+  const index = orders.findIndex(o => o.table === table);
+
+  if (index === -1) return;
+
+  const order = orders[index];
+
+  let subtotal = 0;
+  for (const k in order.items) {
+    subtotal += order.items[k].price * order.items[k].qty;
+  }
+
+  const cgst = +(subtotal * 0.025).toFixed(2);
+  const sgst = +(subtotal * 0.025).toFixed(2);
+  const total = +(subtotal + cgst + sgst).toFixed(2);
+
+  closed.push({
+    table: table,
+    items: order.items,
+    subtotal,
+    cgst,
+    sgst,
+    total,
+    payment: order.payment || "Cash",
+    time: new Date().toISOString()
+  });
+
+  localStorage.setItem(CLOSED_KEY, JSON.stringify(closed));
+
+  orders.splice(index, 1);
+  localStorage.setItem(KITCHEN_KEY, JSON.stringify(orders));
+
+  alert("Bill closed");
+  loadOrders();
+}
+
+/* ================= PRINT ================= */
+function printBill(btn) {
+  const box = btn.closest(".order");
+  document.querySelectorAll(".order").forEach(o => {
+    if (o !== box) o.style.display = "none";
+  });
+  window.print();
+  document.querySelectorAll(".order").forEach(o => o.style.display = "");
+}
 </script>
 
 </body>
 </html>
-
-
