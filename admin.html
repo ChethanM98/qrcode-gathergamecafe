@@ -91,18 +91,17 @@ document.addEventListener("DOMContentLoaded", function () {
       let itemsHTML = "";
       let total = 0;
 
-      for (const name in order.items) {
-        const item = order.items[name];
-        const lineTotal = item.price * item.qty;
-        total += lineTotal;
+      for (const key in order.items) {
+  const item = order.items[key];
+  const lineTotal = item.price * item.qty;
 
-        itemsHTML += `
-          <div class="item-row">
-            <span>${name} × ${item.qty}</span>
-            <span>₹${lineTotal}</span>
-          </div>
-        `;
-      }
+  itemsHTML += `
+    <div class="item-row">
+      <span>${item.name} × ${item.qty}</span>
+      <span>₹${lineTotal}</span>
+    </div>
+  `;
+}
 
       ordersDiv.innerHTML += `
         <div class="order-box">
@@ -169,3 +168,4 @@ document.addEventListener("DOMContentLoaded", function () {
 
 </body>
 </html>
+
