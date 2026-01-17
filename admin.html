@@ -4,7 +4,11 @@
 <title>Kitchen & Billing</title>
 
 <style>
-body { font-family: Arial; background:#f2f2f2; padding:20px; }
+body {
+  font-family: Arial;
+  background:#f2f2f2;
+  padding:20px;
+}
 
 .order-box {
   background:#fff;
@@ -17,10 +21,13 @@ body { font-family: Arial; background:#f2f2f2; padding:20px; }
 .table-title {
   font-size:18px;
   font-weight:bold;
+  margin-bottom:8px;
 }
 
 .items {
-  margin:10px 0;
+  border-top:1px solid #ccc;
+  border-bottom:1px solid #ccc;
+  padding:10px 0;
 }
 
 .item-row {
@@ -32,7 +39,8 @@ body { font-family: Arial; background:#f2f2f2; padding:20px; }
 .total {
   text-align:right;
   font-weight:bold;
-  margin-top:8px;
+  margin-top:10px;
+  line-height:1.6;
 }
 
 .actions {
@@ -44,15 +52,36 @@ body { font-family: Arial; background:#f2f2f2; padding:20px; }
 
 select, button {
   padding:8px 12px;
+  font-size:14px;
 }
 
-.print-btn { background:#7b4b2a; color:#fff; border:none; }
-.close-btn { background:#3fa55b; color:#fff; border:none; }
+.print-btn {
+  background:#7b4b2a;
+  color:#fff;
+  border:none;
+  cursor:pointer;
+}
+
+.close-btn {
+  background:#3fa55b;
+  color:#fff;
+  border:none;
+  cursor:pointer;
+}
 
 @media print {
-  body * { visibility:hidden; }
-  .order-box, .order-box * { visibility:visible; }
-  .order-box { position:absolute; left:0; top:0; width:100%; }
+  body * {
+    visibility:hidden;
+  }
+  .order-box, .order-box * {
+    visibility:visible;
+  }
+  .order-box {
+    position:absolute;
+    left:0;
+    top:0;
+    width:100%;
+  }
 }
 </style>
 </head>
@@ -60,7 +89,10 @@ select, button {
 <body>
 
 <h1>🍽️ Kitchen & Billing</h1>
+
 <div id="orders"></div>
+
+<hr>
 
 <h2>📊 Reports</h2>
 <button onclick="exportDailySummaryExcel()">📅 Day-wise Excel</button>
@@ -76,6 +108,9 @@ document.addEventListener("DOMContentLoaded", function () {
 
   loadOrders();
 
+  /* =========================
+     LOAD & RENDER ORDERS
+  ========================= */
   function loadOrders() {
     const orders = JSON.parse(localStorage.getItem(KITCHEN_KEY)) || [];
     ordersDiv.innerHTML = "";
@@ -87,21 +122,27 @@ document.addEventListener("DOMContentLoaded", function () {
       return;
     }
 
-    openOrders.forEach((order, index) => {
+    openOrders.forEach(order => {
+
       let itemsHTML = "";
-      let total = 0;
+      let subTotal = 0;
 
       for (const key in order.items) {
-  const item = order.items[key];
-  const lineTotal = item.price * item.qty;
+        const item = order.items[key];
+        const lineTotal = item.price * item.qty;
+        subTotal += lineTotal;
 
-  itemsHTML += `
-    <div class="item-row">
-      <span>${item.name} × ${item.qty}</span>
-      <span>₹${lineTotal}</span>
-    </div>
-  `;
-}
+        itemsHTML += `
+          <div class="item-row">
+            <span>${item.name} × ${item.qty}</span>
+            <span>₹${lineTotal.toFixed(2)}</span>
+          </div>
+        `;
+      }
+
+      const cgst = subTotal * 0.025;
+      const sgst = subTotal * 0.025;
+      const grandTotal = subTotal + cgst + sgst;
 
       ordersDiv.innerHTML += `
         <div class="order-box">
@@ -109,7 +150,12 @@ document.addEventListener("DOMContentLoaded", function () {
 
           <div class="items">
             ${itemsHTML}
-            <div class="total">Total: ₹${total}</div>
+            <div class="total">
+              Subtotal: ₹${subTotal.toFixed(2)}<br>
+              CGST (2.5%): ₹${cgst.toFixed(2)}<br>
+              SGST (2.5%): ₹${sgst.toFixed(2)}<br>
+              <strong>Grand Total: ₹${grandTotal.toFixed(2)}</strong>
+            </div>
           </div>
 
           <div class="actions">
@@ -134,6 +180,9 @@ document.addEventListener("DOMContentLoaded", function () {
     });
   }
 
+  /* =========================
+     SET PAYMENT METHOD
+  ========================= */
   window.setPayment = function (table, method) {
     const orders = JSON.parse(localStorage.getItem(KITCHEN_KEY)) || [];
     const order = orders.find(o => o.table === table && o.status === "Open");
@@ -143,6 +192,9 @@ document.addEventListener("DOMContentLoaded", function () {
     }
   };
 
+  /* =========================
+     CLOSE BILL
+  ========================= */
   window.closeBill = function (table) {
     const orders = JSON.parse(localStorage.getItem(KITCHEN_KEY)) || [];
     const index = orders.findIndex(o => o.table === table && o.status === "Open");
@@ -150,15 +202,18 @@ document.addEventListener("DOMContentLoaded", function () {
     if (index === -1) return;
 
     if (!orders[index].payment) {
-      alert("Select payment method before closing bill");
+      alert("Please select payment method before closing bill");
       return;
     }
 
-    orders.splice(index, 1); // close order
+    orders.splice(index, 1); // remove closed order
     localStorage.setItem(KITCHEN_KEY, JSON.stringify(orders));
     loadOrders();
   };
 
+  /* =========================
+     PRINT BILL
+  ========================= */
   window.printBill = function () {
     window.print();
   };
@@ -168,4 +223,3 @@ document.addEventListener("DOMContentLoaded", function () {
 
 </body>
 </html>
-
