@@ -48,8 +48,8 @@ body {
 
 <body>
 
-<a href="cart.html" class="cart-btn">
-  🛒 Cart <span id="cart-count">0</span>
+<a id="cartLink" class="cart-btn">
+  🛒 Go to Cart <span id="cart-count">0</span>
 </a>
 
 <h1>Menu</h1>
@@ -63,9 +63,14 @@ document.addEventListener("DOMContentLoaded", function () {
      1. GET TABLE NUMBER FROM URL
      Example: menu.html?table=5
   ================================= */
-  const params = new URLSearchParams(window.location.search);
-  const tableNo = params.get("table") || "default";
-  const CART_KEY = `cart_table_${tableNo}`;
+const params = new URLSearchParams(window.location.search);
+const tableNo = params.get("table") || "default";
+
+// Pass table number to cart page
+const cartLink = document.getElementById("cartLink");
+if (cartLink) {
+  cartLink.href = `cart.html?table=${tableNo}`;
+}
 
   /* ================================
      2. MENU DATA (SAMPLE)
@@ -197,6 +202,7 @@ document.addEventListener("DOMContentLoaded", function () {
 
 </body>
 </html>
+
 
 
 
