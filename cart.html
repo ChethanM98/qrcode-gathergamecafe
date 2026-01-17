@@ -105,6 +105,7 @@ document.addEventListener("DOMContentLoaded", function () {
 
   const CART_KEY = `cart_table_${table}`;
   const KITCHEN_KEY = "kitchen_orders";
+  const QUEUE_KEY = "kitchen_queue";
 
   document.getElementById("tableInfo").innerText =
     `Table No: ${table}`;
@@ -143,50 +144,63 @@ document.addEventListener("DOMContentLoaded", function () {
   totalDiv.innerText = `Total: ₹${total}`;
 
   /* =========================
-     PLACE ORDER → KITCHEN
+     PLACE ORDER
+     → Kitchen Queue (NO APPEND)
+     → Billing (APPENDABLE)
   ========================= */
- window.placeOrder = function () {
+  window.placeOrder = function () {
 
-  const kitchenOrders =
-    JSON.parse(localStorage.getItem("kitchen_orders")) || [];
+    /* -------- 1️⃣ PUSH TO KITCHEN QUEUE -------- */
+    const queue =
+      JSON.parse(localStorage.getItem(QUEUE_KEY)) || [];
 
-  // Check if table already has an OPEN order
-  const existingOrder = kitchenOrders.find(
-    o => o.table === table && o.status === "Open"
-  );
-
-  if (existingOrder) {
-    // Append items
-    for (const name in cart) {
-      if (existingOrder.items[name]) {
-        existingOrder.items[name].qty += cart[name].qty;
-      } else {
-        existingOrder.items[name] = cart[name];
-      }
-    }
-  } else {
-    // Create new order
-    kitchenOrders.push({
+    queue.push({
       table: table,
-      items: cart,
-      payment: "",
-      status: "Open",
+      items: JSON.parse(JSON.stringify(cart)), // snapshot
+      status: "Pending",
       time: new Date().toLocaleString()
     });
-  }
 
-  localStorage.setItem("kitchen_orders", JSON.stringify(kitchenOrders));
+    localStorage.setItem(QUEUE_KEY, JSON.stringify(queue));
 
-  // Clear only table cart
-  localStorage.removeItem(CART_KEY);
+    /* -------- 2️⃣ BILLING (APPEND LOGIC) -------- */
+    const kitchenOrders =
+      JSON.parse(localStorage.getItem(KITCHEN_KEY)) || [];
 
-  alert("Order sent to kitchen!");
-  window.location.href = `index.html?table=${table}`;
-};
+    const existingOrder = kitchenOrders.find(
+      o => o.table === table && o.status === "Open"
+    );
+
+    if (existingOrder) {
+      // Append items for same table
+      for (const key in cart) {
+        if (existingOrder.items[key]) {
+          existingOrder.items[key].qty += cart[key].qty;
+        } else {
+          existingOrder.items[key] = cart[key];
+        }
+      }
+    } else {
+      kitchenOrders.push({
+        table: table,
+        items: cart,
+        payment: "",
+        status: "Open",
+        time: new Date().toLocaleString()
+      });
+    }
+
+    localStorage.setItem(KITCHEN_KEY, JSON.stringify(kitchenOrders));
+
+    /* -------- 3️⃣ CLEAR CART -------- */
+    localStorage.removeItem(CART_KEY);
+
+    alert("Order sent to kitchen!");
+    window.location.href = `index.html?table=${table}`;
+  };
 
 });
 </script>
 
 </body>
 </html>
-
