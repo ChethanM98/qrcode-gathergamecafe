@@ -3,31 +3,151 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>Menu</title>
+<title>Gather & Game Café – Menu</title>
 
 <style>
-body { font-family: Arial; background:#f6f1e7; padding:20px; }
-.menu-item { background:#fff; padding:15px; margin-bottom:10px; border-radius:8px; display:flex; justify-content:space-between; }
-.add-btn { background:#3fa55b; color:#fff; border:none; padding:8px 14px; border-radius:20px; cursor:pointer; }
-.qty { display:none; gap:8px; }
-.qty button { width:28px; height:28px; border-radius:50%; border:none; background:#7b4b2a; color:#fff; }
-.cart-btn { position:fixed; bottom:20px; right:20px; background:#3fa55b; color:#fff; padding:12px 18px; border-radius:999px; text-decoration:none; }
+body {
+  font-family: Arial, sans-serif;
+  padding: 20px;
+  margin: 0;
+  background: linear-gradient(135deg, #f6f1e7, #e7dbc8);
+}
+
+h1 {
+  text-align: center;
+  margin-bottom: 20px;
+}
+
+.tabs {
+  display: flex;
+  gap: 10px;
+  justify-content: center;
+  overflow-x: auto;
+  margin-bottom: 20px;
+}
+
+.tab-btn {
+  padding: 10px 16px;
+  background: #f6f1e7;
+  border: 2px solid #7b4b2a;
+  cursor: pointer;
+  border-radius: 999px;
+  font-weight: bold;
+  white-space: nowrap;
+}
+
+.tab-btn.active {
+  background: #7b4b2a;
+  color: #fff;
+}
+
+.menu-container {
+  max-width: 1000px;
+  margin: auto;
+}
+
+.tab-content {
+  display: none;
+}
+
+.tab-content.active {
+  display: block;
+}
+
+.menu-item {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  background: #fff;
+  border-radius: 10px;
+  padding: 15px;
+  margin-bottom: 14px;
+  box-shadow: 0 4px 12px rgba(0,0,0,0.12);
+}
+
+.menu-item h3 {
+  margin: 0;
+}
+
+.desc {
+  font-size: 14px;
+  color: #5f4a3a;
+  margin: 4px 0;
+}
+
+.price {
+  font-weight: bold;
+}
+
+.actions {
+  display: flex;
+  align-items: center;
+}
+
+.add-btn {
+  background: #3fa55b;
+  border: none;
+  padding: 10px 18px;
+  color: white;
+  cursor: pointer;
+  border-radius: 999px;
+}
+
+.qty {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+}
+
+.qty button {
+  width: 28px;
+  height: 28px;
+  border-radius: 50%;
+  border: none;
+  background: #7b4b2a;
+  color: white;
+  font-size: 18px;
+  cursor: pointer;
+}
+
+.cart-btn {
+  position: fixed;
+  bottom: 20px;
+  right: 20px;
+  background: #3fa55b;
+  color: #fff;
+  padding: 14px 22px;
+  border-radius: 999px;
+  text-decoration: none;
+  font-weight: bold;
+}
+
+.cart-count {
+  background: #fff;
+  color: #3fa55b;
+  margin-left: 8px;
+  padding: 2px 8px;
+  border-radius: 999px;
+}
 </style>
 </head>
 
 <body>
 
 <a id="cartLink" class="cart-btn">
-  🛒 Cart <span id="cart-count">0</span>
+  🛒 Cart <span id="cart-count" class="cart-count">0</span>
 </a>
 
-<h2 id="tableInfo"></h2>
-<div id="menu"></div>
+<h1>🎲 Gather & Game Café Menu</h1>
+<p id="tableInfo" style="text-align:center"></p>
+
+<div class="tabs" id="tabs"></div>
+<div id="menu" class="menu-container"></div>
 
 <script>
 document.addEventListener("DOMContentLoaded", () => {
 
-  /* TABLE */
+  /* ================= TABLE ================= */
   const params = new URLSearchParams(location.search);
   const table = params.get("table") || "1";
   const CART_KEY = `cart_table_${table}`;
@@ -35,37 +155,163 @@ document.addEventListener("DOMContentLoaded", () => {
   document.getElementById("tableInfo").innerText = "Table " + table;
   document.getElementById("cartLink").href = `cart.html?table=${table}`;
 
-  /* DATA */
-  const items = [
-    { id: 1, name: "Masala Chai", price: 49 },
-    { id: 2, name: "Coffee", price: 59 }
-  ];
+  /* ================= MENU DATA ================= */
+  const menuData = {
+  "🍳 Eggs & Breads": [
+   { name: "Fried Eggs (2 eggs)", price: 49, desc: "Sunny-side up eggs cooked fresh." },
+{ name: "Boiled Eggs (2 eggs)", price: 49, desc: "Perfectly boiled eggs with light seasoning." },
+{ name: "Masala Omelette", price: 89, desc: "Omelette with onions, tomatoes, and Indian spices." },
+{ name: "Cheese Omelette", price: 99, desc: "Fluffy omelette filled with melted cheese." },
+{ name: "Egg Bhurji", price: 99, desc: "Scrambled eggs cooked desi-style." },
+{ name: "Mushroom Cheese Omelette", price: 109, desc: "Omelette with sautéed mushrooms and cheese." },
+{ name: "Vegetable Masala Omelette", price: 109, desc: "Egg omelette loaded with fresh vegetables." },
+{ name: "Chicken Omelette", price: 119, desc: "Protein-packed omelette with chicken chunks." },
+{ name: "Anda Bhurji Pav", price: 119, desc: "Spicy egg bhurji served with buttered pav." },
+{ name: "Butter Bread (2 pieces)", price: 39, desc: "Toasted bread with butter." },
+{ name: "Garlic Bread", price: 79, desc: "Crispy garlic-flavored bread." }
+],
+  "🔥 Starters": [
+    { name: "Dice Roll Fries", price: 149, desc: "Classic golden fries, crispy and addictive." },
+{ name: "Checkmate Cheese Balls", price: 179, desc: "Crunchy outside with molten cheese inside." },
+{ name: "Knight’s Nachos (Veg)", price: 199, desc: "Nachos loaded with cheese, salsa, and veggies." },
+{ name: "Knight’s Nachos (Chicken)", price: 229, desc: "Nachos topped with spicy chicken and cheese." },
+{ name: "Queen’s Garlic Bread", price: 169, desc: "Herb garlic bread with buttery finish." },
+{ name: "Meeple Masala Fries", price: 159, desc: "Fries tossed in bold Indian masala." },
+{ name: "Pawn Popcorn", price: 129, desc: "Light, crispy salted popcorn." },
+{ name: "Chicken Popcorn", price: 159, desc: "Juicy fried chicken bites." },
+{ name: "Peri-Peri Fries", price: 169, desc: "Spicy peri-peri seasoned fries." }
+  ],
+  "🍔 Burgers & Sandwiches": [
+{ name: "Veg Burger", price: 179, desc: "Grilled veg patty with lettuce and sauce." },
+{ name: "Paneer Tikka Burger", price: 199, desc: "Paneer tikka patty with mint mayo." },
+{ name: "Chicken Burger", price: 199, desc: "Juicy grilled chicken patty." },
+{ name: "Crispy Chicken Burger", price: 229, desc: "Crunchy fried chicken with creamy sauce." },
+{ name: "Veg Grilled Sandwich", price: 169, desc: "Grilled sandwich stuffed with veggies." },
+{ name: "Paneer Grilled Sandwich", price: 179, desc: "Spiced paneer grilled sandwich." },
+{ name: "Chicken Club Sandwich", price: 209, desc: "Triple-layer chicken sandwich." },
+{ name: "Corn & Cheese Sandwich", price: 169, desc: "Creamy corn and cheese filling." },
+{ name: "Chocolate Sandwich", price: 189, desc: "Sweet chocolate-filled sandwich." }
+  ],
+  "🍕 Perfectly Played Pizzas": [
+{ name: "Margherita Pizza", price: 219, desc: "Classic tomato and mozzarella pizza." },
+{ name: "Vegetarian Delight Pizza", price: 269, desc: "Loaded with fresh vegetables and cheese." },
+{ name: "Paneer Tikka Pizza", price: 299, desc: "Paneer tikka, capsicum, onion, and cheese." },
+{ name: "Mushroom Cheese Feast Pizza", price: 249, desc: "Cheesy pizza topped with mushrooms." },
+{ name: "Chicken Tikka Pizza", price: 319, desc: "Smoky chicken tikka with cheese." },
+{ name: "Peri-Peri Chicken Pizza", price: 329, desc: "Spicy peri-peri chicken delight." },
+{ name: "Pepperoni Pizza", price: 339, desc: "Classic pepperoni slices and cheese." },
+{ name: "Chicken Overload Pizza", price: 359, desc: "Extra chicken, extra cheese." }
+],
+"🍜 Mindful Maggi": [
+{ name: "Classic Masala Maggi", price: 139, desc: "Classic Maggi with signature masala." },
+{ name: "Peri-Peri Maggi", price: 149, desc: "Spicy peri-peri flavored Maggi." },
+{ name: "Paneer Tikka Maggi", price: 159, desc: "Maggi mixed with paneer tikka." },
+{ name: "Cheesy Maggi", price: 159, desc: "Creamy cheesy Maggi." },
+{ name: "Chicken Maggi", price: 179, desc: "Maggi cooked with chicken pieces." },
+{ name: "Chicken Keema Maggi", price: 179, desc: "Flavorful Maggi with chicken keema." }
+],
+  "🍝 Checkmate Pastas": [
+{ name: "Classic White Sauce Pasta", price: 179, desc: "Creamy white sauce pasta." },
+{ name: "Classic Red Sauce Pasta", price: 169, desc: "Tangy tomato-based pasta." },
+{ name: "Pink Sauce Pasta", price: 189, desc: "Blend of red and white sauce." },
+{ name: "White Sauce Chicken Pasta", price: 229, desc: "Creamy pasta with chicken." },
+{ name: "Red Sauce Chicken Pasta", price: 219, desc: "Spicy red sauce pasta with chicken." },
+{ name: "Pink Sauce Chicken Pasta", price: 239, desc: "Rich pink sauce with chicken." },
+{ name: "Arrabbiata Pasta", price: 179, desc: "Spicy garlic chili pasta." },
+{ name: "Cheesy Garlic Pasta", price: 189, desc: "Garlic pasta loaded with cheese." }
+],
+  "☕ Drinks": [
+    { name: "Masala Chai", price: 49, desc: "Traditional Indian spiced tea." },
+{ name: "Elaichi Chai", price: 49, desc: "Cardamom infused aromatic tea." },
+{ name: "Ginger Tea", price: 49, desc: "Strong ginger flavored tea." },
+{ name: "Filter Coffee", price: 49, desc: "South Indian style filter coffee." },
+{ name: "Hot Chocolate", price: 99, desc: "Rich creamy hot chocolate." },
+{ name: "Lemon Honey Tea", price: 49, desc: "Soothing lemon tea with honey." },
+{ name: "Iced Coffee", price: 109, desc: "Cold brewed coffee with ice." },
+{ name: "Iced Mocha", price: 129, desc: "Cold coffee blended with chocolate." },
+{ name: "Cold Cocoa", price: 129, desc: "Chilled chocolate beverage." },
+{ name: "Fresh Lime Soda", price: 69, desc: "Refreshing lime soda (sweet or salt)." },
+{ name: "Water", price: "MRP", desc: "Packaged drinking water." }
+  ],
+"🍰 Castle Desserts": [
+{ name: "Molten Choco Lava Cake", price: 179, desc: "Warm chocolate cake with molten center." },
+{ name: "Chocolate Sundae", price: 199, desc: "Ice cream topped with chocolate sauce." },
+{ name: "Tres Leches Cake", price: 179, desc: "Soft cake soaked in three-milk blend." },
+{ name: "Brownie with Ice Cream", price: 189, desc: "Warm brownie served with vanilla ice cream." },
+{ name: "Oreo Sundae", price: 199, desc: "Creamy sundae with Oreo crumbles." },
+{ name: "Hot Chocolate Pudding", price: 199, desc: "Rich baked chocolate pudding." },
+{ name: "New York Cheesecake", price: 199, desc: "Classic creamy cheesecake." },
+{ name: "Gulab Jamun Ice Cream", price: 169, desc: "Gulab jamun served with ice cream." }
+],
+"🎯 Combos": [
+{ name: "Pawn Power Combo", price: 179, desc: "Popcorn + beverage combo." },
+{ name: "Dice & Dip Combo", price: 249, desc: "Fries with dip and drink." },
+{ name: "Checkmate Veg Combo", price: 349, desc: "Veg starter + fries + drink." },
+{ name: "Knight Non-Veg Combo", price: 399, desc: "Chicken starter + fries + drink." },
+{ name: "Duo Dice Combo", price: 599, desc: "Perfect sharing combo for two." },
+{ name: "Meeple Platter Combo", price: 649, desc: "Assorted starters with drinks." },
+{ name: "Burger Play Combo", price: 499, desc: "Burger, fries, and beverage." },
+{ name: "Sandwich Strategy Combo", price: 459, desc: "Sandwich, fries, and beverage." },
+{ name: "Big Game Combo", price: 699, desc: "Pizza, starter, and drinks." },
+{ name: "Chess Challenge Combo", price: 699, desc: "Mocktails, popcorn, and desserts." }
+]
+}; 
+    window.menuData || {};
 
+
+  /* ================= STATE ================= */
   let cart = JSON.parse(localStorage.getItem(CART_KEY)) || {};
-  const menu = document.getElementById("menu");
+  let activeTab = Object.keys(menuData)[0];
+
+  const tabsDiv = document.getElementById("tabs");
+  const menuDiv = document.getElementById("menu");
   const cartCount = document.getElementById("cart-count");
 
-  /* RENDER */
-  function render() {
-    menu.innerHTML = "";
+  /* ================= RENDER TABS ================= */
+  function renderTabs() {
+    tabsDiv.innerHTML = "";
+    Object.keys(menuData).forEach(section => {
+      const btn = document.createElement("button");
+      btn.className = "tab-btn" + (section === activeTab ? " active" : "");
+      btn.textContent = section;
+      btn.onclick = () => {
+        activeTab = section;
+        renderTabs();
+        renderMenu();
+      };
+      tabsDiv.appendChild(btn);
+    });
+  }
+
+  /* ================= RENDER MENU ================= */
+  function renderMenu() {
+    menuDiv.innerHTML = "";
     let count = 0;
 
-    items.forEach(i => {
-      const qty = cart[i.id]?.qty || 0;
+    menuData[activeTab].forEach(item => {
+      const key = activeTab + "||" + item.name;
+      const qty = cart[key]?.qty || 0;
       count += qty;
 
-      menu.innerHTML += `
-        <div class="menu-item" data-id="${i.id}">
-          <div>${i.name}<br>₹${i.price}</div>
-          ${
-qty === 0
-? `<button class="add-btn">Add</button>`
-: `<div class="qty" style="display:flex">
-     <button class="minus">-</button>
-     <span>${qty}</span>
-     <button class="plus">+</button>
-   </div>`
-          }
+      menuDiv.innerHTML += `
+        <div class="menu-item" data-key="${key}">
+          <div>
+            <h3>${item.name}</h3>
+            <div class="desc">${item.desc}</div>
+            <div class="price">₹${item.price}</div>
+          </div>
+
+          <div class="actions">
+            ${
+              qty === 0
+                ? `<button class="add-btn">Add</button>`
+                : `<div class="qty">
+                     <button class="minus">-</button>
+                     <span>${qty}</span>
+                     <button class="plus">+</button>
+                   </div>`
+            }
+          </div>
         </div>
       `;
     });
@@ -74,34 +320,36 @@ qty === 0
     localStorage.setItem(CART_KEY, JSON.stringify(cart));
   }
 
-  /* EVENTS */
-  menu.addEventListener("click", e => {
+  /* ================= EVENTS ================= */
+  menuDiv.addEventListener("click", e => {
     const card = e.target.closest(".menu-item");
     if (!card) return;
 
-    const id = card.dataset.id;
-    const item = items.find(i => i.id == id);
+    const key = card.dataset.key;
+    const name = card.querySelector("h3").innerText;
+    const price = parseFloat(card.querySelector(".price").innerText.replace("₹",""));
 
     if (e.target.classList.contains("add-btn")) {
-      cart[id] = { name: item.name, price: item.price, qty: 1 };
+      cart[key] = { name, price, qty: 1 };
     }
 
     if (e.target.classList.contains("plus")) {
-      cart[id].qty++;
+      cart[key].qty++;
     }
 
     if (e.target.classList.contains("minus")) {
-      cart[id].qty--;
-      if (cart[id].qty === 0) delete cart[id];
+      cart[key].qty--;
+      if (cart[key].qty === 0) delete cart[key];
     }
 
-    render();
+    renderMenu();
   });
 
-  render();
+  renderTabs();
+  renderMenu();
+
 });
 </script>
 
 </body>
 </html>
-
