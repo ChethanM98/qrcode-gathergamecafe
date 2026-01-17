@@ -1,116 +1,61 @@
 <!DOCTYPE html>
-<html lang="en">
+<html>
 <head>
 <meta charset="UTF-8">
-<meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>Review Order</title>
-
+<title>Cart</title>
 <style>
-body {
-  font-family: Arial, sans-serif;
-  background: #f6f1e7;
-  padding: 20px;
-}
-
-.cart-box {
-  max-width: 700px;
-  margin: auto;
-  background: #fff;
-  padding: 20px;
-  border-radius: 12px;
-}
-
-.cart-item {
-  display: flex;
-  justify-content: space-between;
-  padding: 10px 0;
-  border-bottom: 1px solid #ddd;
-}
-
-.total {
-  text-align: right;
-  font-size: 18px;
-  font-weight: bold;
-  margin-top: 15px;
-}
-
-.actions {
-  display: flex;
-  justify-content: space-between;
-  margin-top: 20px;
-}
-
-button, a {
-  padding: 12px 18px;
-  border-radius: 999px;
-  border: none;
-  font-weight: bold;
-  text-decoration: none;
-  cursor: pointer;
-}
-
-.back {
-  background: #7b4b2a;
-  color: #fff;
-}
-
-.place {
-  background: #3fa55b;
-  color: #fff;
-}
+body { font-family: Arial; background:#f6f1e7; padding:20px; }
+.box { background:#fff; padding:20px; border-radius:10px; max-width:600px; margin:auto; }
+.row { display:flex; justify-content:space-between; margin-bottom:8px; }
 </style>
 </head>
 
 <body>
 
-<h1 style="text-align:center">🧾 Review Order</h1>
-
-<div class="cart-box">
-  <p id="tableInfo"></p>
-  <div id="cartItems"></div>
-  <div id="total" class="total"></div>
-
-  <div class="actions">
-    <a id="backBtn" class="back">⬅ Back</a>
-    <button class="place" onclick="placeOrder()">Place Order</button>
-  </div>
+<div class="box">
+  <h2 id="table"></h2>
+  <div id="items"></div>
+  <h3 id="total"></h3>
+  <button onclick="placeOrder()">Place Order</button>
 </div>
 
 <script>
-document.addEventListener("DOMContentLoaded", function () {
+document.addEventListener("DOMContentLoaded", () => {
 
-  const params = new URLSearchParams(window.location.search);
-  const tableNo = params.get("table") || "default";
-  const CART_KEY = `cart_table_${tableNo}`;
+  const params = new URLSearchParams(location.search);
+  const table = params.get("table") || "1";
+  const CART_KEY = `cart_table_${table}`;
   const KITCHEN_KEY = "kitchen_orders";
 
-  document.getElementById("tableInfo").innerText =
-    `Table No: ${tableNo}`;
-
-  document.getElementById("backBtn").href =
-    `index.html?table=${tableNo}`;
+  document.getElementById("table").innerText = "Table " + table;
 
   const cart = JSON.parse(localStorage.getItem(CART_KEY)) || {};
-  const cartItemsDiv = document.getElementById("cartItems");
-  const totalDiv = document.getElementById("total");
-
   let total = 0;
 
-  if (Object.keys(cart).length === 0) {
-    cartItemsDiv.innerHTML = "<p>Cart is empty</p>";
-    return;
-  }
+  const itemsDiv = document.getElementById("items");
 
-  for (const name in cart) {
-    const item = cart[name];
-    const itemTotal = item.price * item.qty;
-    total += itemTotal;
-
-    cartItemsDiv.innerHTML += `
-      <div class="cart-item">
-        <div>
-          <strong>${name}</strong><br>
-          ₹${item.price} × ${item.qty}
-        </div>
-        <div>₹${itemTotal}</div>
+  Object.values(cart).forEach(i => {
+    total += i.price * i.qty;
+    itemsDiv.innerHTML += `
+      <div class="row">
+        <span>${i.name} × ${i.qty}</span>
+        <span>₹${i.price * i.qty}</span>
       </div>
+    `;
+  });
+
+  document.getElementById("total").innerText = "Total ₹" + total;
+
+  window.placeOrder = () => {
+    const orders = JSON.parse(localStorage.getItem(KITCHEN_KEY)) || [];
+    orders.push({ table, cart, total, time: new Date().toLocaleString() });
+    localStorage.setItem(KITCHEN_KEY, JSON.stringify(orders));
+    localStorage.removeItem(CART_KEY);
+    alert("Order placed");
+    location.href = `index.html?table=${table}`;
+  };
+});
+</script>
+
+</body>
+</html>
