@@ -1,0 +1,28 @@
+<!DOCTYPE html>
+<html>
+<body>
+
+<h2>Owner Login</h2>
+<input type="password" id="pin" placeholder="Enter PIN">
+<button onclick="login()">Login</button>
+
+  <script>
+function login() {
+  const pin = document.getElementById("pin").value;
+
+  if (pin === "9845981913") { // change PIN
+    localStorage.setItem("admin_auth", "true");
+    localStorage.setItem("admin_auth_time", Date.now());
+
+    const params = new URLSearchParams(location.search);
+    const redirect = params.get("redirect") || "admin.html";
+
+    location.href = redirect;
+  } else {
+    alert("Invalid PIN");
+  }
+}
+</script>
+
+</body>
+</html>
