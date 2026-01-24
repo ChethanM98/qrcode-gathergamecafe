@@ -14,7 +14,7 @@
   if (!auth || !time || Date.now() - time > 30 * 60 * 1000) {
     localStorage.removeItem("admin_auth");
     localStorage.removeItem("admin_auth_time");
-    location.href = "report-login.html?redirect=reports.html";
+    location.href = "report-admin.html?redirect=reports.html";
   }
 })();
 </script>
