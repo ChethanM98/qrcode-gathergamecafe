@@ -5,6 +5,20 @@
 <title>Reports</title>
 <meta name="viewport" content="width=device-width, initial-scale=1">
 
+<!-- 🔐 ADMIN AUTH CHECK -->
+<script>
+(function () {
+  const auth = localStorage.getItem("admin_auth");
+  const time = localStorage.getItem("admin_auth_time");
+
+  if (!auth || !time || Date.now() - time > 30 * 60 * 1000) {
+    localStorage.removeItem("admin_auth");
+    localStorage.removeItem("admin_auth_time");
+    location.href = "report-login.html?redirect=reports.html";
+  }
+})();
+</script>
+
 <style>
 body {
   font-family: Arial, sans-serif;
@@ -61,30 +75,36 @@ button {
   font-weight:bold;
   text-align:right;
 }
+
+.logout {
+  background:#b33939;
+  float:right;
+}
 </style>
 </head>
 
 <body>
 
 <h2>📊 Reports</h2>
+<button class="logout" onclick="logout()">Logout</button>
 
-<!-- ================= QUICK REPORTS ================= -->
+<!-- QUICK REPORTS -->
 <div class="block">
   <h3>Quick Reports</h3>
-  <button onclick="dailyReport()">📅 Daily Report</button>
+  <button onclick="dailyReport()">📅 Daily</button>
   <button onclick="exportDailyCSV()">⬇ Daily CSV</button>
   <br>
-  <button onclick="monthlyReport()">📆 Monthly Report</button>
+  <button onclick="monthlyReport()">📆 Monthly</button>
   <button onclick="exportMonthlyCSV()">⬇ Monthly CSV</button>
   <br>
-  <button onclick="monthlySummary()">📊 Monthly Summary (Day-wise)</button>
+  <button onclick="monthlySummary()">📊 Monthly Summary</button>
 
   <div id="quickOutput" style="margin-top:10px;"></div>
 </div>
 
-<!-- ================= DATE RANGE ================= -->
+<!-- DATE RANGE -->
 <div class="block">
-  <h3>🔍 Date Range Report</h3>
+  <h3>🔍 Date Range</h3>
   From <input type="date" id="from">
   To <input type="date" id="to">
   <br><br>
@@ -92,15 +112,14 @@ button {
   <button onclick="exportRangeCSV()">⬇ Export CSV</button>
 </div>
 
-<!-- ================= DETAILED ================= -->
+<!-- DETAILS -->
 <div class="block" id="details"></div>
-
 <div class="block summary" id="grandTotal"></div>
 
 <script>
 const CLOSED_KEY = "closed_bills";
 
-/* ================= DAILY ================= */
+/* ===== DAILY ===== */
 function dailyReport() {
   const bills = JSON.parse(localStorage.getItem(CLOSED_KEY)) || [];
   const today = new Date().toDateString();
@@ -109,11 +128,10 @@ function dailyReport() {
   bills.filter(b => new Date(b.time).toDateString() === today)
        .forEach(b => total += b.total);
 
-  document.getElementById("quickOutput").innerText =
-    `Today’s Total: ₹${total.toFixed(2)}`;
+  quickOutput.innerText = `Today’s Total: ₹${total.toFixed(2)}`;
 }
 
-/* ================= MONTHLY ================= */
+/* ===== MONTHLY ===== */
 function monthlyReport() {
   const bills = JSON.parse(localStorage.getItem(CLOSED_KEY)) || [];
   const now = new Date();
@@ -125,11 +143,10 @@ function monthlyReport() {
            d.getFullYear() === now.getFullYear();
   }).forEach(b => total += b.total);
 
-  document.getElementById("quickOutput").innerText =
-    `This Month Total: ₹${total.toFixed(2)}`;
+  quickOutput.innerText = `This Month Total: ₹${total.toFixed(2)}`;
 }
 
-/* ================= MONTHLY SUMMARY ================= */
+/* ===== MONTHLY SUMMARY ===== */
 function monthlySummary() {
   const bills = JSON.parse(localStorage.getItem(CLOSED_KEY)) || [];
   const now = new Date();
@@ -149,205 +166,117 @@ function monthlySummary() {
     html += `${day} : ₹${map[day].toFixed(2)}<br>`;
   }
 
-  document.getElementById("quickOutput").innerHTML = html;
+  quickOutput.innerHTML = html;
 }
 
-/* ================= DATE FILTER ================= */
+/* ===== DATE FILTER ===== */
 function dateFilter() {
-  const fromVal = document.getElementById("from").value;
-  const toVal = document.getElementById("to").value;
+  const f = new Date(from.value);
+  const t = new Date(to.value);
+  t.setHours(23,59,59,999);
 
-  if (!fromVal || !toVal) {
-    alert("Select both From and To dates");
-    return;
-  }
-
-  const from = new Date(fromVal);
-  const to = new Date(toVal);
-  to.setHours(23,59,59,999);
-
-  const bills = JSON.parse(localStorage.getItem(CLOSED_KEY)) || [];
-  const div = document.getElementById("details");
-  const totalDiv = document.getElementById("grandTotal");
-
-  div.innerHTML = "";
-  totalDiv.innerHTML = "";
-
+  details.innerHTML = "";
+  grandTotal.innerHTML = "";
   let grand = 0;
 
-  bills.filter(b => {
-    const d = new Date(b.time);
-    return d >= from && d <= to;
-  }).forEach(b => {
+  (JSON.parse(localStorage.getItem(CLOSED_KEY)) || [])
+    .filter(b => new Date(b.time) >= f && new Date(b.time) <= t)
+    .forEach(b => {
 
-    let itemsHTML = "";
-    for (const k in b.items) {
-      const i = b.items[k];
-      itemsHTML += `
-        <div class="item">
-          <span>${i.name} × ${i.qty}</span>
-          <span>₹${i.price * i.qty}</span>
+      let itemsHTML = "";
+      for (const k in b.items) {
+        const i = b.items[k];
+        itemsHTML += `
+          <div class="item">
+            <span>${i.name} × ${i.qty}</span>
+            <span>₹${i.price * i.qty}</span>
+          </div>`;
+      }
+
+      if (b.discountAmount > 0) {
+        itemsHTML += `
+          <div class="item">
+            <span>Discount (${b.discountPercent}%)</span>
+            <span>-₹${b.discountAmount.toFixed(2)}</span>
+          </div>`;
+      }
+
+      grand += b.total;
+
+      details.innerHTML += `
+        <div class="bill">
+          <b>Table ${b.table}</b><br>
+          <small>${new Date(b.time).toLocaleString()}</small>
+          ${itemsHTML}
+          <div class="total">₹${b.total.toFixed(2)}</div>
         </div>`;
-    }
+    });
 
-    if (b.discountAmount > 0) {
-      itemsHTML += `
-        <div class="item">
-          <span>Discount (${b.discountPercent}%)</span>
-          <span>-₹${b.discountAmount.toFixed(2)}</span>
-        </div>`;
-    }
-
-    grand += b.total;
-
-    div.innerHTML += `
-      <div class="bill">
-        <b>Table ${b.table}</b><br>
-        <small>${new Date(b.time).toLocaleString()}</small>
-        ${itemsHTML}
-        <div class="total">₹${b.total.toFixed(2)}</div>
-      </div>
-    `;
-  });
-
-  totalDiv.innerText = `Grand Total: ₹${grand.toFixed(2)}`;
+  grandTotal.innerText = `Grand Total: ₹${grand.toFixed(2)}`;
 }
 
-/* ================= CSV HELPERS ================= */
-function downloadCSV(rows, filename) {
+/* ===== CSV EXPORTS ===== */
+function downloadCSV(rows, name) {
   const csv = rows.map(r => r.map(v => `"${v}"`).join(",")).join("\n");
-  const blob = new Blob([csv], { type:"text/csv" });
-  const url = URL.createObjectURL(blob);
-
   const a = document.createElement("a");
-  a.href = url;
-  a.download = filename;
+  a.href = URL.createObjectURL(new Blob([csv], {type:"text/csv"}));
+  a.download = name;
   a.click();
-  URL.revokeObjectURL(url);
 }
 
-/* ================= DAILY CSV ================= */
 function exportDailyCSV() {
-  const bills = JSON.parse(localStorage.getItem(CLOSED_KEY)) || [];
   const today = new Date().toDateString();
-
-  let rows = [
-    ["Date","Table","Item","Qty","Price",
-     "Discount %","Discount Amount","Bill Total","Payment"]
-  ];
-
-  bills.filter(b => new Date(b.time).toDateString() === today)
-       .forEach(b => {
-         for (const k in b.items) {
-           const i = b.items[k];
-           rows.push([
-             new Date(b.time).toLocaleDateString(),
-             b.table,
-             i.name,
-             i.qty,
-             i.price,
-             b.discountPercent || 0,
-             b.discountAmount || 0,
-             b.total,
-             b.payment
-           ]);
-         }
-       });
-
-  if (rows.length === 1) {
-    alert("No data for today");
-    return;
-  }
-
-  downloadCSV(rows, "daily_report.csv");
+  const rows = [["Date","Table","Discount %","Discount Amt","Total"]];
+  (JSON.parse(localStorage.getItem(CLOSED_KEY)) || [])
+    .filter(b => new Date(b.time).toDateString() === today)
+    .forEach(b => rows.push([
+      new Date(b.time).toLocaleDateString(),
+      b.table,
+      b.discountPercent || 0,
+      b.discountAmount || 0,
+      b.total
+    ]));
+  downloadCSV(rows,"daily_report.csv");
 }
 
-/* ================= MONTHLY CSV ================= */
 function exportMonthlyCSV() {
-  const bills = JSON.parse(localStorage.getItem(CLOSED_KEY)) || [];
   const now = new Date();
-
-  let rows = [
-    ["Date","Table","Item","Qty","Price",
-     "Discount %","Discount Amount","Bill Total","Payment"]
-  ];
-
-  bills.filter(b => {
-    const d = new Date(b.time);
-    return d.getMonth() === now.getMonth() &&
-           d.getFullYear() === now.getFullYear();
-  }).forEach(b => {
-    for (const k in b.items) {
-      const i = b.items[k];
-      rows.push([
-        new Date(b.time).toLocaleDateString(),
-        b.table,
-        i.name,
-        i.qty,
-        i.price,
-        b.discountPercent || 0,
-        b.discountAmount || 0,
-        b.total,
-        b.payment
-      ]);
-    }
-  });
-
-  if (rows.length === 1) {
-    alert("No data this month");
-    return;
-  }
-
-  downloadCSV(rows, "monthly_report.csv");
+  const rows = [["Date","Table","Discount %","Discount Amt","Total"]];
+  (JSON.parse(localStorage.getItem(CLOSED_KEY)) || [])
+    .filter(b => new Date(b.time).getMonth() === now.getMonth())
+    .forEach(b => rows.push([
+      new Date(b.time).toLocaleDateString(),
+      b.table,
+      b.discountPercent || 0,
+      b.discountAmount || 0,
+      b.total
+    ]));
+  downloadCSV(rows,"monthly_report.csv");
 }
 
-/* ================= RANGE CSV ================= */
 function exportRangeCSV() {
-  const fromVal = document.getElementById("from").value;
-  const toVal = document.getElementById("to").value;
+  const f = new Date(from.value);
+  const t = new Date(to.value);
+  t.setHours(23,59,59,999);
 
-  if (!fromVal || !toVal) {
-    alert("Select From and To dates");
-    return;
-  }
+  const rows = [["Date","Table","Discount %","Discount Amt","Total"]];
+  (JSON.parse(localStorage.getItem(CLOSED_KEY)) || [])
+    .filter(b => new Date(b.time) >= f && new Date(b.time) <= t)
+    .forEach(b => rows.push([
+      new Date(b.time).toLocaleDateString(),
+      b.table,
+      b.discountPercent || 0,
+      b.discountAmount || 0,
+      b.total
+    ]));
+  downloadCSV(rows,"range_report.csv");
+}
 
-  const from = new Date(fromVal);
-  const to = new Date(toVal);
-  to.setHours(23,59,59,999);
-
-  const bills = JSON.parse(localStorage.getItem(CLOSED_KEY)) || [];
-
-  let rows = [
-    ["Date","Table","Item","Qty","Price",
-     "Discount %","Discount Amount","Bill Total","Payment"]
-  ];
-
-  bills.filter(b => {
-    const d = new Date(b.time);
-    return d >= from && d <= to;
-  }).forEach(b => {
-    for (const k in b.items) {
-      const i = b.items[k];
-      rows.push([
-        new Date(b.time).toLocaleDateString(),
-        b.table,
-        i.name,
-        i.qty,
-        i.price,
-        b.discountPercent || 0,
-        b.discountAmount || 0,
-        b.total,
-        b.payment
-      ]);
-    }
-  });
-
-  if (rows.length === 1) {
-    alert("No data in range");
-    return;
-  }
-
-  downloadCSV(rows, "range_report.csv");
+/* ===== LOGOUT ===== */
+function logout() {
+  localStorage.removeItem("admin_auth");
+  localStorage.removeItem("admin_auth_time");
+  location.href = "admin-login.html";
 }
 </script>
 
