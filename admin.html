@@ -5,6 +5,20 @@
 <title>Admin Billing</title>
 <meta name="viewport" content="width=device-width, initial-scale=1">
 
+<!-- 🔐 ADMIN AUTH CHECK -->
+<script>
+(function () {
+  const auth = localStorage.getItem("admin_auth");
+  const time = localStorage.getItem("admin_auth_time");
+
+  if (!auth || !time || Date.now() - time > 30 * 60 * 1000) {
+    localStorage.removeItem("admin_auth");
+    localStorage.removeItem("admin_auth_time");
+    location.href = "admin-login.html?redirect=admin.html";
+  }
+})();
+</script>
+
 <style>
 body {
   font-family: Arial, sans-serif;
@@ -14,6 +28,7 @@ body {
 
 h2 {
   text-align:center;
+  margin-bottom:15px;
 }
 
 /* ===== TABLE GRID ===== */
@@ -26,12 +41,17 @@ h2 {
 
 .table-card {
   background:#ffffff;
-  border-radius:12px;
+  border-radius:14px;
   padding:20px 10px;
   text-align:center;
   cursor:pointer;
   box-shadow:0 3px 8px rgba(0,0,0,0.15);
   font-weight:bold;
+  transition:transform 0.15s ease;
+}
+
+.table-card:hover {
+  transform:translateY(-2px);
 }
 
 .table-card.active {
@@ -40,28 +60,32 @@ h2 {
 }
 
 .table-card.empty {
-  opacity:0.4;
+  opacity:0.45;
 }
 
 /* ===== BILL ===== */
 .bill {
   background:#fff;
-  padding:16px;
-  border-radius:12px;
-  box-shadow:0 4px 10px rgba(0,0,0,0.2);
+  padding:18px;
+  border-radius:14px;
+  box-shadow:0 4px 12px rgba(0,0,0,0.2);
+  margin-bottom:30px;
 }
 
 .row {
   display:flex;
   justify-content:space-between;
   margin:4px 0;
+  font-size:14px;
 }
 
 input, select, button {
   width:100%;
-  padding:10px;
-  margin-top:8px;
+  padding:12px;
+  margin-top:10px;
   border-radius:999px;
+  border:1px solid #ccc;
+  font-size:14px;
 }
 
 button {
@@ -71,26 +95,32 @@ button {
   cursor:pointer;
 }
 
+button.danger {
+  background:#b33939;
+}
+
 .hidden {
   display:none;
 }
 
+/* ===== PRINT ===== */
 @media print {
-  body * { visibility:hidden }
-  .bill, .bill * { visibility:visible }
+  body * { visibility:hidden; }
+  .bill, .bill * { visibility:visible; }
   .bill {
     position:absolute;
-    left:0; top:0;
+    left:0;
+    top:0;
     width:80mm;
   }
-  input, select, button { display:none }
+  input, select, button { display:none !important; }
 }
 </style>
 </head>
 
 <body>
 
-<h2>🧾 Billing</h2>
+<h2>🧾 Admin Billing</h2>
 
 <!-- TABLE GRID -->
 <div class="tables" id="tables"></div>
@@ -103,13 +133,13 @@ const TOTAL_TABLES = 15;
 const KITCHEN_KEY = "kitchen_orders";
 const CLOSED_KEY = "closed_bills";
 
+/* ========== INIT ========== */
 renderTables();
 
-/* ========== RENDER TABLE GRID ========== */
+/* ========== TABLE GRID ========== */
 function renderTables() {
   const tablesDiv = document.getElementById("tables");
   const orders = JSON.parse(localStorage.getItem(KITCHEN_KEY)) || [];
-
   tablesDiv.innerHTML = "";
 
   for (let i = 1; i <= TOTAL_TABLES; i++) {
@@ -123,7 +153,7 @@ function renderTables() {
   }
 }
 
-/* ========== OPEN TABLE BILL ========== */
+/* ========== OPEN TABLE ========== */
 function openTable(tableNo) {
   const orders = JSON.parse(localStorage.getItem(KITCHEN_KEY)) || [];
   const order = orders.find(o => o.table == tableNo);
@@ -165,25 +195,26 @@ function openTable(tableNo) {
 
       ${rows}
 
-      <div class="row"><span>Subtotal</span><span>₹${subtotal}</span></div>
-      ${da > 0 ? `<div class="row"><span>Discount (${dp}%)</span><span>-₹${da}</span></div>` : ""}
-      <div class="row"><span>CGST (2.5%)</span><span>₹${cgst}</span></div>
-      <div class="row"><span>SGST (2.5%)</span><span>₹${sgst}</span></div>
-      <div class="row"><b>Total</b><b>₹${total}</b></div>
+      <div class="row"><span>Subtotal</span><span>₹${subtotal.toFixed(2)}</span></div>
+      ${da > 0 ? `<div class="row"><span>Discount (${dp}%)</span><span>-₹${da.toFixed(2)}</span></div>` : ""}
+      <div class="row"><span>CGST (2.5%)</span><span>₹${cgst.toFixed(2)}</span></div>
+      <div class="row"><span>SGST (2.5%)</span><span>₹${sgst.toFixed(2)}</span></div>
+      <div class="row"><b>Total</b><b>₹${total.toFixed(2)}</b></div>
 
-      <input type="number" min="0" max="100"
+      <input type="number"
+             min="0" max="100"
              value="${dp}"
-             onchange="setDiscount(${tableNo}, this.value)"
-             placeholder="Discount %">
+             placeholder="Discount %"
+             onchange="setDiscount(${tableNo}, this.value)">
 
       <select onchange="setPayment(${tableNo}, this.value)">
-        <option value="">Payment</option>
-        <option>Cash</option>
-        <option>UPI</option>
+        <option value="">Payment Method</option>
+        <option value="Cash">Cash</option>
+        <option value="UPI">UPI</option>
       </select>
 
       <button onclick="window.print()">🖨 Print Bill</button>
-      <button onclick="closeBill(${tableNo})">Close Bill</button>
+      <button class="danger" onclick="closeBill(${tableNo})">Close Bill</button>
 
       <hr>
       <center>
@@ -222,30 +253,31 @@ function closeBill(table) {
   if (idx === -1) return;
 
   const o = orders[idx];
+
   let subtotal = 0;
   for (const k in o.items) subtotal += o.items[k].price * o.items[k].qty;
 
   const dp = o.discount || 0;
-  const da = subtotal * dp / 100;
+  const da = +(subtotal * dp / 100).toFixed(2);
   const ds = subtotal - da;
-  const cgst = ds * 0.025;
-  const sgst = ds * 0.025;
-  const total = ds + cgst + sgst;
+  const cgst = +(ds * 0.025).toFixed(2);
+  const sgst = +(ds * 0.025).toFixed(2);
+  const total = +(ds + cgst + sgst).toFixed(2);
 
   closed.push({
     table,
-    items:o.items,
+    items: o.items,
     subtotal,
-    discountPercent:dp,
-    discountAmount:da,
+    discountPercent: dp,
+    discountAmount: da,
     cgst,
     sgst,
     total,
-    payment:o.payment || "Cash",
-    time:new Date().toISOString()
+    payment: o.payment || "Cash",
+    time: new Date().toISOString()
   });
 
-  orders.splice(idx,1);
+  orders.splice(idx, 1);
   localStorage.setItem(KITCHEN_KEY, JSON.stringify(orders));
   localStorage.setItem(CLOSED_KEY, JSON.stringify(closed));
 
