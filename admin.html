@@ -12,12 +12,43 @@ body {
   padding:20px;
 }
 
-.card {
+h2 {
+  text-align:center;
+}
+
+/* ===== TABLE GRID ===== */
+.tables {
+  display:grid;
+  grid-template-columns:repeat(auto-fit,minmax(90px,1fr));
+  gap:12px;
+  margin-bottom:20px;
+}
+
+.table-card {
+  background:#ffffff;
+  border-radius:12px;
+  padding:20px 10px;
+  text-align:center;
+  cursor:pointer;
+  box-shadow:0 3px 8px rgba(0,0,0,0.15);
+  font-weight:bold;
+}
+
+.table-card.active {
+  background:#3fa55b;
+  color:#fff;
+}
+
+.table-card.empty {
+  opacity:0.4;
+}
+
+/* ===== BILL ===== */
+.bill {
   background:#fff;
   padding:16px;
-  margin-bottom:16px;
-  border-radius:10px;
-  box-shadow:0 3px 10px rgba(0,0,0,0.2);
+  border-radius:12px;
+  box-shadow:0 4px 10px rgba(0,0,0,0.2);
 }
 
 .row {
@@ -37,6 +68,11 @@ button {
   background:#3fa55b;
   color:#fff;
   border:none;
+  cursor:pointer;
+}
+
+.hidden {
+  display:none;
 }
 
 @media print {
@@ -55,97 +91,139 @@ button {
 <body>
 
 <h2>🧾 Billing</h2>
-<div id="orders"></div>
+
+<!-- TABLE GRID -->
+<div class="tables" id="tables"></div>
+
+<!-- BILL AREA -->
+<div id="billArea" class="hidden"></div>
 
 <script>
+const TOTAL_TABLES = 15;
 const KITCHEN_KEY = "kitchen_orders";
 const CLOSED_KEY = "closed_bills";
 
-load();
+renderTables();
 
-function load() {
+/* ========== RENDER TABLE GRID ========== */
+function renderTables() {
+  const tablesDiv = document.getElementById("tables");
   const orders = JSON.parse(localStorage.getItem(KITCHEN_KEY)) || [];
-  const div = document.getElementById("orders");
-  div.innerHTML = "";
 
-  orders.forEach((o, idx) => {
+  tablesDiv.innerHTML = "";
 
-    let subtotal = 0;
-    let rows = "";
-
-    for (let k in o.items) {
-      const i = o.items[k];
-      const amt = i.price * i.qty;
-      subtotal += amt;
-      rows += `<div class="row"><span>${i.name} × ${i.qty}</span><span>₹${amt}</span></div>`;
-    }
-
-    const dp = o.discount || 0;
-    const da = +(subtotal * dp / 100).toFixed(2);
-    const ds = subtotal - da;
-    const cgst = +(ds * 0.025).toFixed(2);
-    const sgst = +(ds * 0.025).toFixed(2);
-    const total = +(ds + cgst + sgst).toFixed(2);
-
-    div.innerHTML += `
-      <div class="card bill">
-        <center>
-          <b>Gather & Game Café</b><br>
-          Play · Sip · Repeat
-        </center>
-        <hr>
-
-        <b>Table ${o.table}</b><br><br>
-
-        ${rows}
-
-        <div class="row"><span>Subtotal</span><span>₹${subtotal}</span></div>
-        ${da > 0 ? `<div class="row"><span>Discount (${dp}%)</span><span>-₹${da}</span></div>` : ""}
-        <div class="row"><span>CGST 2.5%</span><span>₹${cgst}</span></div>
-        <div class="row"><span>SGST 2.5%</span><span>₹${sgst}</span></div>
-        <div class="row"><b>Total</b><b>₹${total}</b></div>
-
-        <input type="number" min="0" max="100" value="${dp}"
-          onchange="setDiscount(${idx}, this.value)">
-        <select onchange="setPay(${idx}, this.value)">
-          <option value="">Payment</option>
-          <option>Cash</option>
-          <option>UPI</option>
-        </select>
-
-        <button onclick="window.print()">🖨 Print Bill</button>
-        <button onclick="closeBill(${idx})">Close Bill</button>
-
-        <hr>
-        <center>
-          Game On<br>
-          Where food meets fun
-        </center>
+  for (let i = 1; i <= TOTAL_TABLES; i++) {
+    const active = orders.find(o => o.table == i);
+    tablesDiv.innerHTML += `
+      <div class="table-card ${active ? "active" : "empty"}"
+           onclick="openTable(${i})">
+        Table ${i}
       </div>
     `;
-  });
+  }
 }
 
-function setDiscount(i, v) {
-  let o = JSON.parse(localStorage.getItem(KITCHEN_KEY));
-  o[i].discount = Math.min(100, Math.max(0, +v || 0));
-  localStorage.setItem(KITCHEN_KEY, JSON.stringify(o));
-  load();
-}
+/* ========== OPEN TABLE BILL ========== */
+function openTable(tableNo) {
+  const orders = JSON.parse(localStorage.getItem(KITCHEN_KEY)) || [];
+  const order = orders.find(o => o.table == tableNo);
+  const billDiv = document.getElementById("billArea");
 
-function setPay(i, v) {
-  let o = JSON.parse(localStorage.getItem(KITCHEN_KEY));
-  o[i].payment = v;
-  localStorage.setItem(KITCHEN_KEY, JSON.stringify(o));
-}
-
-function closeBill(i) {
-  let orders = JSON.parse(localStorage.getItem(KITCHEN_KEY));
-  let closed = JSON.parse(localStorage.getItem(CLOSED_KEY)) || [];
-  let o = orders[i];
+  if (!order) {
+    billDiv.classList.remove("hidden");
+    billDiv.innerHTML = `<p>No active order for Table ${tableNo}</p>`;
+    return;
+  }
 
   let subtotal = 0;
-  for (let k in o.items) subtotal += o.items[k].price * o.items[k].qty;
+  let rows = "";
+
+  for (const k in order.items) {
+    const i = order.items[k];
+    const amt = i.price * i.qty;
+    subtotal += amt;
+    rows += `<div class="row"><span>${i.name} × ${i.qty}</span><span>₹${amt}</span></div>`;
+  }
+
+  const dp = order.discount || 0;
+  const da = +(subtotal * dp / 100).toFixed(2);
+  const ds = subtotal - da;
+  const cgst = +(ds * 0.025).toFixed(2);
+  const sgst = +(ds * 0.025).toFixed(2);
+  const total = +(ds + cgst + sgst).toFixed(2);
+
+  billDiv.classList.remove("hidden");
+  billDiv.innerHTML = `
+    <div class="bill">
+      <center>
+        <b>Gather & Game Café</b><br>
+        Play · Sip · Repeat
+      </center>
+      <hr>
+
+      <b>Table ${tableNo}</b><br><br>
+
+      ${rows}
+
+      <div class="row"><span>Subtotal</span><span>₹${subtotal}</span></div>
+      ${da > 0 ? `<div class="row"><span>Discount (${dp}%)</span><span>-₹${da}</span></div>` : ""}
+      <div class="row"><span>CGST (2.5%)</span><span>₹${cgst}</span></div>
+      <div class="row"><span>SGST (2.5%)</span><span>₹${sgst}</span></div>
+      <div class="row"><b>Total</b><b>₹${total}</b></div>
+
+      <input type="number" min="0" max="100"
+             value="${dp}"
+             onchange="setDiscount(${tableNo}, this.value)"
+             placeholder="Discount %">
+
+      <select onchange="setPayment(${tableNo}, this.value)">
+        <option value="">Payment</option>
+        <option>Cash</option>
+        <option>UPI</option>
+      </select>
+
+      <button onclick="window.print()">🖨 Print Bill</button>
+      <button onclick="closeBill(${tableNo})">Close Bill</button>
+
+      <hr>
+      <center>
+        Game On<br>
+        Where food meets fun
+      </center>
+    </div>
+  `;
+}
+
+/* ========== DISCOUNT ========== */
+function setDiscount(table, value) {
+  let orders = JSON.parse(localStorage.getItem(KITCHEN_KEY)) || [];
+  const o = orders.find(x => x.table == table);
+  if (!o) return;
+  o.discount = Math.min(100, Math.max(0, +value || 0));
+  localStorage.setItem(KITCHEN_KEY, JSON.stringify(orders));
+  openTable(table);
+}
+
+/* ========== PAYMENT ========== */
+function setPayment(table, value) {
+  let orders = JSON.parse(localStorage.getItem(KITCHEN_KEY)) || [];
+  const o = orders.find(x => x.table == table);
+  if (o) {
+    o.payment = value;
+    localStorage.setItem(KITCHEN_KEY, JSON.stringify(orders));
+  }
+}
+
+/* ========== CLOSE BILL ========== */
+function closeBill(table) {
+  let orders = JSON.parse(localStorage.getItem(KITCHEN_KEY)) || [];
+  let closed = JSON.parse(localStorage.getItem(CLOSED_KEY)) || [];
+  const idx = orders.findIndex(o => o.table == table);
+  if (idx === -1) return;
+
+  const o = orders[idx];
+  let subtotal = 0;
+  for (const k in o.items) subtotal += o.items[k].price * o.items[k].qty;
 
   const dp = o.discount || 0;
   const da = subtotal * dp / 100;
@@ -155,21 +233,24 @@ function closeBill(i) {
   const total = ds + cgst + sgst;
 
   closed.push({
-    table:o.table,
+    table,
     items:o.items,
     subtotal,
     discountPercent:dp,
     discountAmount:da,
-    cgst, sgst,
+    cgst,
+    sgst,
     total,
     payment:o.payment || "Cash",
     time:new Date().toISOString()
   });
 
-  orders.splice(i,1);
+  orders.splice(idx,1);
   localStorage.setItem(KITCHEN_KEY, JSON.stringify(orders));
   localStorage.setItem(CLOSED_KEY, JSON.stringify(closed));
-  load();
+
+  document.getElementById("billArea").classList.add("hidden");
+  renderTables();
 }
 </script>
 
